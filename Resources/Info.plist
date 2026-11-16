@@ -15,9 +15,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.3.71</string>
+	<string>0.3.72</string>
 	<key>CFBundleVersion</key>
-	<string>81</string>
+	<string>82</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSAppTransportSecurity</key>
@@ -30,11 +30,12 @@
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_jackquota._tcp</string>
+		<string>_jack._tcp</string>
 	</array>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>CodeOS usa la red local para repartir la cuota de la cuenta de Claude con las demás Macs del grupo.</string>
+	<string>Jack usa la red local para que Pixel en tu iPhone controle tus agentes y para repartir la cuota de la cuenta de Claude con las demás Macs de CodeOS.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Jack usa el micrófono para dictar mensajes al chat.</string>
 	<key>NSPrefersDisplaySafeAreaCompatibilityMode</key>
