@@ -205,6 +205,24 @@ final class JackRemoteTests: XCTestCase {
         XCTAssertEqual(answer?.usage, [], "Sin lecturas todavía no hay cuotas, pero la Mac contesta")
     }
 
+    @MainActor func testSystemStatsAreAnsweredWithoutAnAgent() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("jack-remote-tests-" + UUID().uuidString)
+        let store = ChatStore(archive: ChatArchive(directory: folder), preferences: nil, driverFactory: { _ in RemoteDriver() })
+        let server = JackRemoteServer(store: store, port: 0, advertises: false, pairingCode: code)
+        defer { server.stop(); store.shutdown(); try? FileManager.default.removeItem(at: folder) }
+        server.start()
+        try await until { server.status == .ready }
+        let client = RemoteClient(port: try XCTUnwrap(server.listeningPort), code: code)
+        let connected = await client.connect()
+        XCTAssertTrue(connected)
+        defer { client.close() }
+        client.send(.init(id: "s", type: .system))
+        let answer = await client.next { $0.type == .system && $0.id == "s" }
+        let stats = try XCTUnwrap(answer?.system)
+        XCTAssertGreaterThan(stats.memoryTotalBytes, 0)
+        XCTAssertGreaterThan(stats.diskTotalBytes, 0)
+    }
+
     @MainActor func testPixelChangesModelAndModeButNeverBypass() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("jack-remote-tests-" + UUID().uuidString)
         let store = ChatStore(archive: ChatArchive(directory: folder), preferences: nil, driverFactory: { _ in RemoteDriver() })

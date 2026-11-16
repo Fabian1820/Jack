@@ -35,6 +35,8 @@ Para publicar una versión: sube `CFBundleShortVersionString` y `CFBundleVersion
 
 Jack Remote responde a la petición `usage` con las cuotas de Claude y Codex que Jack ya lee, para que clientes como Agent Dock (Android) las muestren. Solo en modo Normal: Light no abre Jack Remote.
 
+A la petición `system` responde con la batería, la RAM y el almacenamiento de la Mac, que Agent Dock muestra en su pestaña **Mac**.
+
 En modo Normal, Codex usa YOLO por defecto: ejecuta acciones sin pedir aprobación y sin sandbox. Light conserva sus permisos anteriores.
 
 En modo Normal, **Ajustes → Apariencia → Oficina 2D** ofrece el estudio animado como alternativa a la oficina 3D. El selector **2D / 3D** permite cambiar entre las dos vistas. Los agentes muestran su actividad real, caminan hasta su puesto y celebran al terminar antes de descansar. Pulsa un personaje o su mesa para ver sus datos y abrir su conversación; los agentes que descansan pueden saludar, ir a por café o sentarse en el sofá. También puedes preparar café y regar la planta de la sala. La cabecera permite pausar las animaciones, que respetan Reducir movimiento y se detienen al ocultar la ventana o abrir un chat de la oficina. Light no incorpora estas vistas.

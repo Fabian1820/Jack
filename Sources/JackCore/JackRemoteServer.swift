@@ -429,6 +429,8 @@ public extension ChatStore {
             think(request)
         case .usage:
             sendUsage(request, store)
+        case .system:
+            send(.init(type: .system, id: request.id, system: .current()))
         case .rename:
             guard let id = agentID(request, store, reply: true) else { return }
             let title = (request.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)

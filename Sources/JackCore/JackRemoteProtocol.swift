@@ -84,6 +84,8 @@ public enum JackRemote {
             /// Las cuotas de los proveedores (Claude, Codex…); la respuesta es un evento `usage`. Con `text` = "refresh" la Mac
             /// vuelve a leerlas antes de contestar.
             case usage
+            /// Batería, RAM y disco de la Mac; la respuesta es un evento `system`.
+            case system
         }
         public var id: String
         public var type: Kind
@@ -144,6 +146,8 @@ public enum JackRemote {
             case ollama
             /// Las cuotas de cada proveedor, en `usage`.
             case usage
+            /// Batería, RAM y disco de la Mac, en `system`.
+            case system
         }
         public var type: Kind
         /// The request this answers; nil for pushes.
@@ -167,13 +171,14 @@ public enum JackRemote {
         /// Estado HTTP de una respuesta `ollama`.
         public var status: Int?
         public var usage: [ProviderQuota]?
+        public var system: SystemStats?
 
         public init(type: Kind, id: String? = nil, agent: String? = nil, text: String? = nil, name: String? = nil,
                     host: String? = nil, version: Int? = nil, agents: [AgentSummary]? = nil, projects: [String]? = nil,
                     messages: [Message]? = nil, summary: AgentSummary? = nil, approvals: [Approval]? = nil,
                     waiting: [String]? = nil, config: Config? = nil, providers: [ProviderOptions]? = nil, status: Int? = nil,
-                    usage: [ProviderQuota]? = nil) {
-            self.status = status; self.usage = usage
+                    usage: [ProviderQuota]? = nil, system: SystemStats? = nil) {
+            self.status = status; self.usage = usage; self.system = system
             self.type = type; self.id = id; self.agent = agent; self.text = text; self.name = name; self.host = host
             self.version = version; self.agents = agents; self.projects = projects; self.messages = messages
             self.summary = summary; self.approvals = approvals; self.waiting = waiting
@@ -202,6 +207,23 @@ public enum JackRemote {
         public var resetsAt: Double?
         public init(id: String, title: String, usedPercent: Double?, resetsAt: Double?) {
             self.id = id; self.title = title; self.usedPercent = usedPercent; self.resetsAt = resetsAt
+        }
+    }
+
+    /// Batería, RAM y disco de la Mac. Jack la rellena con `SystemStats.current()` (solo macOS).
+    public struct SystemStats: Codable, Equatable, Sendable {
+        /// 0–100; nil si la Mac no tiene batería.
+        public var batteryPercent: Double?
+        public var batteryCharging: Bool
+        public var memoryUsedBytes: Double
+        public var memoryTotalBytes: Double
+        public var diskAvailableBytes: Double
+        public var diskTotalBytes: Double
+        public init(batteryPercent: Double?, batteryCharging: Bool, memoryUsedBytes: Double, memoryTotalBytes: Double,
+                    diskAvailableBytes: Double, diskTotalBytes: Double) {
+            self.batteryPercent = batteryPercent; self.batteryCharging = batteryCharging
+            self.memoryUsedBytes = memoryUsedBytes; self.memoryTotalBytes = memoryTotalBytes
+            self.diskAvailableBytes = diskAvailableBytes; self.diskTotalBytes = diskTotalBytes
         }
     }
 
