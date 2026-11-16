@@ -12,9 +12,16 @@ final class ChatRunConfigurationTests: XCTestCase {
         conversation.mode = "auto"
         let auto = ChatRunConfiguration.codexTurn(conversation, threadID: "thread", prompt: "Implement")
         XCTAssertEqual(auto["approvalPolicy"] as? String, "never")
-        XCTAssertEqual((auto["sandboxPolicy"] as? [String: Any])?["type"] as? String, "workspaceWrite")
+        XCTAssertEqual((auto["sandboxPolicy"] as? [String: Any])?["type"] as? String, "dangerFullAccess")
         conversation.mode = "default"
-        XCTAssertEqual(ChatRunConfiguration.codexTurn(conversation, threadID: "thread", prompt: "Continue")["approvalPolicy"] as? String, "on-request")
+        let normal = ChatRunConfiguration.codexTurn(conversation, threadID: "thread", prompt: "Continue")
+        XCTAssertEqual(normal["approvalPolicy"] as? String, "never")
+        XCTAssertEqual((normal["sandboxPolicy"] as? [String: Any])?["type"] as? String, "dangerFullAccess")
+        let light = ChatRunConfiguration.codexTurn(conversation, threadID: "thread", prompt: "Continue", lightMode: true)
+        XCTAssertEqual(light["approvalPolicy"] as? String, "on-request")
+        XCTAssertEqual((light["sandboxPolicy"] as? [String: Any])?["type"] as? String, "workspaceWrite")
+        conversation.mode = "auto"
+        XCTAssertEqual(ChatRunConfiguration.codexTurn(conversation, threadID: "thread", prompt: "Continue", lightMode: true)["approvalPolicy"] as? String, "never")
     }
     func testOpenCodeModeAndEffortAreSentAsAgentAndVariant() throws {
         var conversation = ChatConversation(projectPath: "/tmp", provider: .opencode, model: "google/gemini-test")
@@ -192,7 +199,7 @@ final class ChatRunConfigurationTests: XCTestCase {
         XCTAssertEqual(Array(claude.prefix(4)), ["--add-dir", "/work/lib", "--add-dir", "/work/docs"])
         XCTAssertTrue(claude[4].hasPrefix("--"), "the variadic --add-dir must be closed by another flag")
 
-        let codex = ChatRunConfiguration.codexTurn(conversation, threadID: "thread", prompt: "Hi")
+        let codex = ChatRunConfiguration.codexTurn(conversation, threadID: "thread", prompt: "Hi", lightMode: true)
         XCTAssertEqual((codex["sandboxPolicy"] as? [String: Any])?["writableRoots"] as? [String],
                        ["/work/app", "/work/lib", "/work/docs", ProgressFiles.directory(for: conversation.id).path], "the last one lets jack-progress report from the sandbox")
 

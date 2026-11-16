@@ -6,7 +6,7 @@ La versión de Windows en C# y WinUI 3 comienza en [`Windows/`](Windows/README.m
 
 ## Versionado
 
-La versión actual es **0.3.69**. Las siguientes versiones avanzan dentro de la serie **0.3**, hasta **0.3.99**. El salto a **0.4** por un cambio grande se hará únicamente cuando el usuario lo indique explícitamente.
+La versión actual es **0.3.73**. Las siguientes versiones avanzan dentro de la serie **0.3**, hasta **0.3.99**. El salto a **0.4** por un cambio grande se hará únicamente cuando el usuario lo indique explícitamente.
 
 ## Construir
 
@@ -32,6 +32,8 @@ En modo Normal, Jack consulta las releases de GitHub (`brianmojena/Jack`) al abr
 Para publicar una versión: sube `CFBundleShortVersionString` y `CFBundleVersion` en `Resources/Info.plist`, haz commit y push, y ejecuta `scripts/release.sh --publish`. Sin `--publish` solo genera `build/release/Jack-<versión>.zip`. La app lleva firma ad hoc, así que un zip descargado con el navegador pide clic derecho > Abrir la primera vez; la instalación desde Jack no tiene ese problema porque la descarga no lleva cuarentena.
 
 ## Uso
+
+En modo Normal, Codex usa YOLO por defecto: ejecuta acciones sin pedir aprobación y sin sandbox. Light conserva sus permisos anteriores.
 
 En modo Normal, **Ajustes → Apariencia → Oficina 2D** ofrece el estudio animado como alternativa a la oficina 3D. El selector **2D / 3D** permite cambiar entre las dos vistas. Los agentes muestran su actividad real, caminan hasta su puesto y celebran al terminar antes de descansar. Pulsa un personaje o su mesa para ver sus datos y abrir su conversación; los agentes que descansan pueden saludar, ir a por café o sentarse en el sofá. También puedes preparar café y regar la planta de la sala. La cabecera permite pausar las animaciones, que respetan Reducir movimiento y se detienen al ocultar la ventana o abrir un chat de la oficina. Light no incorpora estas vistas.
 

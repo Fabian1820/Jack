@@ -333,13 +333,14 @@ final class CodexChatDriver: ProcessChatDriver {
         try process.writeJSON(["method": "initialized", "params": [:]])
         if let saved = conversation.sessionID, !saved.isEmpty {
             var params: [String: Any] = ["threadId": saved]
+            if !energySaving { params["approvalPolicy"] = "never"; params["sandbox"] = "danger-full-access" }
             if let instructions = ChatRunConfiguration.agentInstructions(delegating: delegation?.delegates == true, images: delegation?.images == true, notebooks: delegation?.notebooks == true, normalMode: delegation?.normalMode == true) { params["developerInstructions"] = instructions }
             let requestID = id(); try process.writeJSON(["id": requestID, "method": "thread/resume", "params": params])
             try await waitForResponse(id: requestID, process: process, reader: reader, generation: generation, onEvent: onEvent)
             threadID = saved
         } else {
             let requestID = id()
-            var params: [String: Any] = ["cwd": conversation.projectPath, "model": nonempty(conversation.model), "approvalPolicy": "on-request", "sandbox": "workspace-write"]
+            var params: [String: Any] = ["cwd": conversation.projectPath, "model": nonempty(conversation.model), "approvalPolicy": energySaving ? "on-request" : "never", "sandbox": energySaving ? "workspace-write" : "danger-full-access"]
             if let instructions = ChatRunConfiguration.agentInstructions(delegating: delegation?.delegates == true, images: delegation?.images == true, notebooks: delegation?.notebooks == true, normalMode: delegation?.normalMode == true) { params["developerInstructions"] = instructions }
             try process.writeJSON(["id": requestID, "method": "thread/start", "params": params])
             try await waitForResponse(id: requestID, process: process, reader: reader, generation: generation, onEvent: onEvent)
@@ -363,7 +364,7 @@ final class CodexChatDriver: ProcessChatDriver {
             let target: [String: Any] = arguments.isEmpty ? ["type": "uncommittedChanges"] : ["type": "custom", "instructions": arguments]
             try process.writeJSON(["id": requestID, "method": "review/start", "params": ["threadId": threadID, "target": target]])
         default:
-            try process.writeJSON(["id": requestID, "method": "turn/start", "params": ChatRunConfiguration.codexTurn(conversation, threadID: threadID, prompt: prompt, skill: skill)])
+            try process.writeJSON(["id": requestID, "method": "turn/start", "params": ChatRunConfiguration.codexTurn(conversation, threadID: threadID, prompt: prompt, skill: skill, lightMode: energySaving)])
         }
         var completed = false
         while let line = try await reader.next() {
@@ -1959,7 +1960,7 @@ public enum ChatCommandService {
 }
 
 enum ChatRunConfiguration {
-    static func codexTurn(_ conversation: ChatConversation, threadID: String, prompt: String, skill: [String: Any]? = nil) -> [String: Any] {
+    static func codexTurn(_ conversation: ChatConversation, threadID: String, prompt: String, skill: [String: Any]? = nil, lightMode: Bool = false) -> [String: Any] {
         let mode = conversation.mode ?? "default"
         var input: [[String: Any]] = [["type": "text", "text": prompt]]
         // Codex mentions skills as `$name`; the skill item tells it which file to load.
@@ -1971,9 +1972,10 @@ enum ChatRunConfiguration {
             input[0]["text"] = ChatAttachments.promptText(input[0]["text"] as? String ?? prompt, attachments: attachments)
             input += attachments.filter { ChatAttachments.imageType($0) != nil }.map { ["type": "localImage", "path": $0] }
         }
+        let sandbox: [String: Any] = lightMode ? ["type": "workspaceWrite", "writableRoots": [conversation.projectPath] + conversation.additionalDirectories + [ProgressFiles.directory(for: conversation.id).path], "networkAccess": false] : ["type": "dangerFullAccess"]
         return ["threadId": threadID, "input": input,
-            "cwd": conversation.projectPath, "approvalPolicy": mode == "auto" ? "never" : "on-request",
-            "sandboxPolicy": ["type": "workspaceWrite", "writableRoots": [conversation.projectPath] + conversation.additionalDirectories + [ProgressFiles.directory(for: conversation.id).path], "networkAccess": false],
+            "cwd": conversation.projectPath, "approvalPolicy": lightMode && mode != "auto" ? "on-request" : "never",
+            "sandboxPolicy": sandbox,
             "model": nonempty(conversation.model), "effort": conversation.effort, "summary": "detailed",
             "collaborationMode": ["mode": mode == "plan" ? "plan" : "default", "settings": [
                 "model": nonempty(conversation.model), "reasoning_effort": conversation.effort,
