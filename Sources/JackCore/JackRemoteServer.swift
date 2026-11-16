@@ -427,6 +427,8 @@ public extension ChatStore {
             relayOllama(request)
         case .think:
             think(request)
+        case .usage:
+            sendUsage(request, store)
         case .rename:
             guard let id = agentID(request, store, reply: true) else { return }
             let title = (request.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -486,6 +488,24 @@ public extension ChatStore {
             } catch {
                 self?.fail(request, error.localizedDescription)
             }
+            self?.relays.removeValue(forKey: request.id)
+        }
+        relays[request.id] = task
+    }
+
+    /// Las cuotas que Jack ya tiene; con `refresh` las vuelve a leer antes (CLI y red, así que no bloquea la sesión).
+    private func sendUsage(_ request: JackRemote.Request, _ store: ChatStore) {
+        let task = Task { [weak self] in
+            if request.text == "refresh" { await store.refreshUsage() }
+            let quotas = store.usage.values.filter { !$0.windows.isEmpty }.sorted { $0.provider.rawValue < $1.provider.rawValue }.map { usage in
+                JackRemote.ProviderQuota(
+                    provider: usage.provider.rawValue, title: usage.provider.title, note: usage.note,
+                    windows: usage.windows.map {
+                        JackRemote.QuotaWindow(id: $0.id, title: $0.title, usedPercent: $0.usedPercent,
+                                               resetsAt: $0.resetsAt?.timeIntervalSince1970)
+                    })
+            }
+            self?.send(.init(type: .usage, id: request.id, usage: quotas))
             self?.relays.removeValue(forKey: request.id)
         }
         relays[request.id] = task

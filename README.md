@@ -6,7 +6,7 @@ La versión de Windows en C# y WinUI 3 comienza en [`Windows/`](Windows/README.m
 
 ## Versionado
 
-La versión actual es **0.3.73**. Las siguientes versiones avanzan dentro de la serie **0.3**, hasta **0.3.99**. El salto a **0.4** por un cambio grande se hará únicamente cuando el usuario lo indique explícitamente.
+La versión actual es **0.3.74**. Las siguientes versiones avanzan dentro de la serie **0.3**, hasta **0.3.99**. El salto a **0.4** por un cambio grande se hará únicamente cuando el usuario lo indique explícitamente.
 
 ## Construir
 
@@ -32,6 +32,8 @@ En modo Normal, Jack consulta las releases de GitHub (`brianmojena/Jack`) al abr
 Para publicar una versión: sube `CFBundleShortVersionString` y `CFBundleVersion` en `Resources/Info.plist`, haz commit y push, y ejecuta `scripts/release.sh --publish`. Sin `--publish` solo genera `build/release/Jack-<versión>.zip`. La app lleva firma ad hoc, así que un zip descargado con el navegador pide clic derecho > Abrir la primera vez; la instalación desde Jack no tiene ese problema porque la descarga no lleva cuarentena.
 
 ## Uso
+
+Jack Remote responde a la petición `usage` con las cuotas de Claude y Codex que Jack ya lee, para que clientes como Agent Dock (Android) las muestren. Solo en modo Normal: Light no abre Jack Remote.
 
 En modo Normal, Codex usa YOLO por defecto: ejecuta acciones sin pedir aprobación y sin sandbox. Light conserva sus permisos anteriores.
 

@@ -81,6 +81,9 @@ public enum JackRemote {
             /// herramientas ni historial: lo que piensa un personaje de la oficina del iPhone con Claude Code, Codex u OpenCode.
             /// La respuesta llega entera en el `text` del `ok`.
             case think
+            /// Las cuotas de los proveedores (Claude, Codex…); la respuesta es un evento `usage`. Con `text` = "refresh" la Mac
+            /// vuelve a leerlas antes de contestar.
+            case usage
         }
         public var id: String
         public var type: Kind
@@ -139,6 +142,8 @@ public enum JackRemote {
             case error
             /// Parte de la respuesta de una petición `ollama`: primero su `status` HTTP y después cada línea en `text`.
             case ollama
+            /// Las cuotas de cada proveedor, en `usage`.
+            case usage
         }
         public var type: Kind
         /// The request this answers; nil for pushes.
@@ -161,16 +166,42 @@ public enum JackRemote {
         public var providers: [ProviderOptions]?
         /// Estado HTTP de una respuesta `ollama`.
         public var status: Int?
+        public var usage: [ProviderQuota]?
 
         public init(type: Kind, id: String? = nil, agent: String? = nil, text: String? = nil, name: String? = nil,
                     host: String? = nil, version: Int? = nil, agents: [AgentSummary]? = nil, projects: [String]? = nil,
                     messages: [Message]? = nil, summary: AgentSummary? = nil, approvals: [Approval]? = nil,
-                    waiting: [String]? = nil, config: Config? = nil, providers: [ProviderOptions]? = nil, status: Int? = nil) {
-            self.status = status
+                    waiting: [String]? = nil, config: Config? = nil, providers: [ProviderOptions]? = nil, status: Int? = nil,
+                    usage: [ProviderQuota]? = nil) {
+            self.status = status; self.usage = usage
             self.type = type; self.id = id; self.agent = agent; self.text = text; self.name = name; self.host = host
             self.version = version; self.agents = agents; self.projects = projects; self.messages = messages
             self.summary = summary; self.approvals = approvals; self.waiting = waiting
             self.config = config; self.providers = providers
+        }
+    }
+
+    /// Cuotas de un proveedor tal como las ve Jack en la Mac.
+    public struct ProviderQuota: Codable, Equatable, Sendable, Identifiable {
+        public var id: String { provider }
+        public var provider: String
+        public var title: String
+        public var note: String
+        public var windows: [QuotaWindow]
+        public init(provider: String, title: String, note: String, windows: [QuotaWindow]) {
+            self.provider = provider; self.title = title; self.note = note; self.windows = windows
+        }
+    }
+
+    public struct QuotaWindow: Codable, Equatable, Sendable, Identifiable {
+        public var id: String
+        public var title: String
+        /// 0–100; nil si la cuenta no dice cuánto lleva gastado.
+        public var usedPercent: Double?
+        /// Segundos desde 1970 en que se restablece.
+        public var resetsAt: Double?
+        public init(id: String, title: String, usedPercent: Double?, resetsAt: Double?) {
+            self.id = id; self.title = title; self.usedPercent = usedPercent; self.resetsAt = resetsAt
         }
     }
 
