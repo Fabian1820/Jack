@@ -24,7 +24,7 @@ jobs:
 
       - name: Recursos compilados
         shell: pwsh
-        run: Get-ChildItem out -Recurse -Include *.pri,*.xbf | Select-Object FullName, Length
+        run: Get-ChildItem out, Windows/Jack.WinUI/obj -Recurse -Include *.pri,*.xbf | Select-Object FullName, Length
 
       - name: Abrir la app y capturar pantalla
         shell: pwsh
