@@ -22,36 +22,35 @@ jobs:
       - name: Publicar Jack.WinUI (x64)
         run: dotnet publish Windows/Jack.WinUI -c Release -p:Platform=x64 -o out
 
-      - name: Recursos compilados
-        shell: pwsh
-        run: Get-ChildItem out, Windows/Jack.WinUI/obj -Recurse -Include *.pri,*.xbf | Select-Object FullName, Length
-
       - name: Abrir la app y capturar pantalla
         shell: pwsh
         run: |
-          $since = Get-Date
-          $app = Start-Process out/Jack.WinUI.exe -PassThru
-          Start-Sleep -Seconds 15
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
-          $bmp.Save("$PWD/screenshot.png")
-          if ($app.HasExited) {
-            Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=$since} -ErrorAction SilentlyContinue |
-              Where-Object { $_.Message -match 'Jack' } | ForEach-Object { $_.Message } | Out-File events.txt
-            Get-Content events.txt
-            if (Test-Path out/crash.log) { Copy-Item out/crash.log crash.log; Get-Content crash.log }
-            throw "Jack.WinUI se cerró con código $($app.ExitCode)"
+          foreach ($c in @(@('empty','light'), @('demo','light'), @('demo','dark'))) {
+            $env:JACK_CAPTURE = $c[0]; $env:JACK_THEME = $c[1]
+            $since = Get-Date
+            $app = Start-Process out/Jack.WinUI.exe -PassThru
+            Start-Sleep -Seconds 12
+            $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+            $bmp.Save("$PWD/$($c[0])-$($c[1]).png")
+            if ($app.HasExited) {
+              Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=$since} -ErrorAction SilentlyContinue |
+                Where-Object { $_.Message -match 'Jack' } | ForEach-Object { $_.Message } | Out-File events.txt
+              Get-Content events.txt
+              if (Test-Path out/crash.log) { Copy-Item out/crash.log crash.log; Get-Content crash.log }
+              throw "Jack.WinUI se cerró con código $($app.ExitCode)"
+            }
+            Stop-Process $app
           }
-          Stop-Process $app
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: jack-windows
           path: |
-            screenshot.png
+            *.png
             events.txt
             crash.log
           if-no-files-found: ignore

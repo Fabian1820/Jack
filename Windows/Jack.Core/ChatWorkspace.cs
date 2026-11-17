@@ -6,6 +6,8 @@ public enum ChatProvider { Codex, Claude, OpenCode }
 
 public sealed record ChatConversation(Guid Id, string Title, string ProjectPath, ChatProvider Provider)
 {
+    public string ProjectName => Path.GetFileName(ProjectPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) is { Length: > 0 } name ? name : ProjectPath;
+
     public string ProviderTitle => Provider switch
     {
         ChatProvider.Claude => "Claude Code",

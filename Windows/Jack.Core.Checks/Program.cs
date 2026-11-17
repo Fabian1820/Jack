@@ -11,6 +11,7 @@ Check(workspace.Conversations.SequenceEqual([first, second]), "Se conserva el or
 Check(second.ProviderTitle == "Claude Code", "El proveedor conserva su nombre visible.");
 Check(workspace.CreateConversation("Tercera", project, ChatProvider.OpenCode).ProviderTitle == "OpenCode",
     "OpenCode conserva su nombre visible.");
+Check(first.ProjectName == new DirectoryInfo(project).Name, "El nombre del proyecto es el de su carpeta.");
 Check(first.ProviderTitle == "Codex", "Codex conserva su nombre visible.");
 
 Reject<ArgumentException>(() => workspace.CreateConversation(" ", project, ChatProvider.Codex));

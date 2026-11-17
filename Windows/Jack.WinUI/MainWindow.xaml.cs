@@ -1,7 +1,9 @@
 using Jack.Core;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Windows.Storage.Pickers;
 
 namespace Jack.WinUI;
@@ -13,8 +15,45 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        SystemBackdrop = new MicaBackdrop();
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         ConversationList.ItemsSource = workspace.Conversations;
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1100, 740));
+        ShowConversation(null);
+        ApplyCaptureMode();
+    }
+
+    // Solo para CI: JACK_CAPTURE=empty|demo y JACK_THEME=light|dark preparan la ventana para la captura de pantalla.
+    private void ApplyCaptureMode()
+    {
+        var mode = Environment.GetEnvironmentVariable("JACK_CAPTURE");
+        if (mode is not ("empty" or "demo")) return;
+        AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(0, 0, 1000, 700));
+        Root.RequestedTheme = Environment.GetEnvironmentVariable("JACK_THEME") == "dark" ? ElementTheme.Dark : ElementTheme.Light;
+        if (mode != "demo") return;
+        var demo = Path.Combine(Path.GetTempPath(), "jack-demo");
+        (string Title, string Folder, ChatProvider Provider)[] samples =
+        [
+            ("Revisar el módulo de pagos", "tienda-web", ChatProvider.Codex),
+            ("Migrar a .NET 10", "api-pedidos", ChatProvider.Claude),
+            ("Documentar la CLI", "docs", ChatProvider.OpenCode)
+        ];
+        foreach (var (title, folder, provider) in samples)
+            workspace.CreateConversation(title, Directory.CreateDirectory(Path.Combine(demo, folder)).FullName, provider);
+        ConversationList.SelectedIndex = 0;
+    }
+
+    private void ShowConversation(ChatConversation? conversation)
+    {
+        EmptyState.Visibility = conversation is null ? Visibility.Visible : Visibility.Collapsed;
+        ConversationView.Visibility = conversation is null ? Visibility.Collapsed : Visibility.Visible;
+        if (conversation is null) return;
+        HeaderPicture.DisplayName = conversation.ProviderTitle;
+        ConversationTitle.Text = conversation.Title;
+        ConversationDescription.Text = $"{conversation.ProviderTitle} · {conversation.ProjectPath}";
+        Composer.PlaceholderText = $"Escribe un mensaje para {conversation.ProviderTitle}…";
     }
 
     private async void NewConversation_Click(object sender, RoutedEventArgs e)
@@ -89,11 +128,6 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void ConversationList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (ConversationList.SelectedItem is not ChatConversation conversation) return;
-        ConversationTitle.Text = conversation.Title;
-        ConversationDescription.Text = $"{conversation.ProviderTitle} · Conversación preparada";
-        ProjectPath.Text = conversation.ProjectPath;
-    }
+    private void ConversationList_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        ShowConversation(ConversationList.SelectedItem as ChatConversation);
 }
