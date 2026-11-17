@@ -20,9 +20,18 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         ConversationList.ItemsSource = workspace.Conversations;
-        AppWindow.Resize(new Windows.Graphics.SizeInt32(1100, 740));
+        FitToScreen();
         ShowConversation(null);
         ApplyCaptureMode();
+    }
+
+    // El tamaño por defecto no debe superar el área útil (p. ej. una pantalla de 800x600).
+    private void FitToScreen()
+    {
+        var work = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
+        var width = Math.Min(1100, work.Width);
+        var height = Math.Min(740, work.Height);
+        AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(work.X + (work.Width - width) / 2, work.Y + (work.Height - height) / 2, width, height));
     }
 
     // Solo para CI: JACK_CAPTURE=empty|demo y JACK_THEME=light|dark preparan la ventana para la captura de pantalla.
