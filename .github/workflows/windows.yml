@@ -25,14 +25,20 @@ jobs:
       - name: Abrir la app y capturar pantalla
         shell: pwsh
         run: |
+          $since = Get-Date
           $app = Start-Process out/Jack.WinUI.exe -PassThru
           Start-Sleep -Seconds 15
-          if ($app.HasExited) { throw "Jack.WinUI se cerró con código $($app.ExitCode)" }
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
           $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
           [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           $bmp.Save("$PWD/screenshot.png")
+          if ($app.HasExited) {
+            Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=$since} -ErrorAction SilentlyContinue |
+              Where-Object { $_.Message -match 'Jack' } | ForEach-Object { $_.Message } | Out-File events.txt
+            Get-Content events.txt
+            throw "Jack.WinUI se cerró con código $($app.ExitCode)"
+          }
           Stop-Process $app
 
       - uses: actions/upload-artifact@v4
@@ -41,4 +47,5 @@ jobs:
           name: jack-windows
           path: |
             screenshot.png
-            out/
+            events.txt
+          if-no-files-found: ignore
