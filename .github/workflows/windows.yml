@@ -45,6 +45,17 @@ jobs:
             Stop-Process $app
           }
 
+      - name: Comprimir la app
+        shell: pwsh
+        run: Compress-Archive -Path out/* -DestinationPath Jack-windows-x64.zip -CompressionLevel Optimal
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jack-windows-x64
+          path: Jack-windows-x64.zip
+          retention-days: 3
+          compression-level: 0
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
