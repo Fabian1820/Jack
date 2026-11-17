@@ -65,8 +65,13 @@ public sealed partial class MainWindow : Window
         Composer.PlaceholderText = $"Escribe un mensaje para {conversation.ProviderTitle}…";
     }
 
+    private bool isCreating;
+
     private async void NewConversation_Click(object sender, RoutedEventArgs e)
     {
+        // Hay dos botones "Nuevo agente"; WinUI solo permite un ContentDialog abierto a la vez.
+        if (isCreating) return;
+        isCreating = true;
         NewConversationButton.IsEnabled = false;
         try
         {
@@ -134,6 +139,7 @@ public sealed partial class MainWindow : Window
         finally
         {
             NewConversationButton.IsEnabled = true;
+            isCreating = false;
         }
     }
 
