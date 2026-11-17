@@ -22,6 +22,10 @@ jobs:
       - name: Publicar Jack.WinUI (x64)
         run: dotnet publish Windows/Jack.WinUI -c Release -p:Platform=x64 -o out
 
+      - name: Recursos compilados
+        shell: pwsh
+        run: Get-ChildItem out -Recurse -Include *.pri,*.xbf | Select-Object FullName, Length
+
       - name: Abrir la app y capturar pantalla
         shell: pwsh
         run: |
