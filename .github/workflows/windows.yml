@@ -37,6 +37,7 @@ jobs:
             Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=$since} -ErrorAction SilentlyContinue |
               Where-Object { $_.Message -match 'Jack' } | ForEach-Object { $_.Message } | Out-File events.txt
             Get-Content events.txt
+            if (Test-Path out/crash.log) { Copy-Item out/crash.log crash.log; Get-Content crash.log }
             throw "Jack.WinUI se cerró con código $($app.ExitCode)"
           }
           Stop-Process $app
@@ -48,4 +49,5 @@ jobs:
           path: |
             screenshot.png
             events.txt
+            crash.log
           if-no-files-found: ignore
