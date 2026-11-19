@@ -7,6 +7,101 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="JackCanvasBrush" Color="#0B0D14" />
+                    <SolidColorBrush x:Key="JackPanelBrush" Color="#0DFFFFFF" />
+                    <SolidColorBrush x:Key="JackPanelStrongBrush" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="JackStrokeBrush" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="JackTextBrush" Color="#F3F5FA" />
+                    <SolidColorBrush x:Key="JackTextDimBrush" Color="#A8B0C8" />
+                    <SolidColorBrush x:Key="JackTextFaintBrush" Color="#6F7896" />
+                    <LinearGradientBrush x:Key="JackTitleBrush" StartPoint="0,0" EndPoint="1,0.4">
+                        <GradientStop Color="#FFFFFF" Offset="0" />
+                        <GradientStop Color="#FFC49A" Offset="1" />
+                    </LinearGradientBrush>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="JackCanvasBrush" Color="#0B0D14" />
+                    <SolidColorBrush x:Key="JackPanelBrush" Color="#0DFFFFFF" />
+                    <SolidColorBrush x:Key="JackPanelStrongBrush" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="JackStrokeBrush" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="JackTextBrush" Color="#F3F5FA" />
+                    <SolidColorBrush x:Key="JackTextDimBrush" Color="#A8B0C8" />
+                    <SolidColorBrush x:Key="JackTextFaintBrush" Color="#6F7896" />
+                    <LinearGradientBrush x:Key="JackTitleBrush" StartPoint="0,0" EndPoint="1,0.4">
+                        <GradientStop Color="#FFFFFF" Offset="0" />
+                        <GradientStop Color="#FFC49A" Offset="1" />
+                    </LinearGradientBrush>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="JackCanvasBrush" Color="#EDF0F7" />
+                    <SolidColorBrush x:Key="JackPanelBrush" Color="#B3FFFFFF" />
+                    <SolidColorBrush x:Key="JackPanelStrongBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="JackStrokeBrush" Color="#1F1B2235" />
+                    <SolidColorBrush x:Key="JackTextBrush" Color="#12172A" />
+                    <SolidColorBrush x:Key="JackTextDimBrush" Color="#566080" />
+                    <SolidColorBrush x:Key="JackTextFaintBrush" Color="#8B93AD" />
+                    <LinearGradientBrush x:Key="JackTitleBrush" StartPoint="0,0" EndPoint="1,0.4">
+                        <GradientStop Color="#12172A" Offset="0" />
+                        <GradientStop Color="#D9480F" Offset="1" />
+                    </LinearGradientBrush>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <LinearGradientBrush x:Key="JackAccentBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#FFB15C" Offset="0" />
+                <GradientStop Color="#FF5A1F" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="JackInkBrush" Color="#190B04" />
+            <SolidColorBrush x:Key="JackGreenBrush" Color="#2FBF71" />
+            <SolidColorBrush x:Key="JackRedBrush" Color="#F0555A" />
+            <SolidColorBrush x:Key="JackAmberBrush" Color="#FFB020" />
+
+            <!-- Botón principal naranja: degradado, borde de luz y halo apilado (WinUI no tiene desenfoque en XAML). -->
+            <Style x:Key="JackCta" TargetType="Button">
+                <Setter Property="Foreground" Value="{StaticResource JackInkBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Padding" Value="16,11" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid x:Name="Host">
+                                <Border Margin="-6" CornerRadius="19" Background="#FF5A1F" Opacity="0.07" />
+                                <Border Margin="-3" CornerRadius="16" Background="#FF5A1F" Opacity="0.14" />
+                                <Border x:Name="Bg" CornerRadius="13" Background="{StaticResource JackAccentBrush}"
+                                        BorderBrush="#55FFFFFF" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="Center" />
+                                </Border>
+                                <Border x:Name="Sheen" CornerRadius="13" Background="#30FFFFFF" Opacity="0" IsHitTestVisible="False" />
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="Sheen.Opacity" Value="1" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="Host.Opacity" Value="0.85" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="Host.Opacity" Value="0.35" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
