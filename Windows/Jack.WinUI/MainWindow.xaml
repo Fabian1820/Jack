@@ -37,24 +37,24 @@
             </DataTemplate>
 
             <DataTemplate x:Key="ToolTurn" x:DataType="local:Turn">
-                <Border Margin="42,0,0,0" CornerRadius="12" Padding="12,10"
+                <Border Margin="42,0,0,0" CornerRadius="12" Padding="12,9"
                         Background="{ThemeResource JackPanelBrush}" BorderThickness="1"
                         BorderBrush="{ThemeResource JackStrokeBrush}">
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ProgressRing Width="18" Height="18" IsActive="{x:Bind Running}" Visibility="{x:Bind ShowRunning}"
+                        <ProgressRing Width="16" Height="16" IsActive="{x:Bind Running}" Visibility="{x:Bind ShowRunning}"
                                       Foreground="{StaticResource JackAmberBrush}" />
                         <FontIcon Glyph="&#xE73E;" FontSize="15" Visibility="{x:Bind ShowDone}"
                                   Foreground="{StaticResource JackGreenBrush}" />
-                        <StackPanel Grid.Column="1" Spacing="1">
-                            <TextBlock Text="{x:Bind Text}" FontWeight="SemiBold" FontSize="13"
-                                       Foreground="{ThemeResource JackTextBrush}" />
-                            <TextBlock Text="{x:Bind Detail}" FontSize="12" FontFamily="Cascadia Code, Consolas"
-                                       TextTrimming="CharacterEllipsis" Foreground="{ThemeResource JackTextDimBrush}" />
-                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{x:Bind Text}" FontWeight="SemiBold" FontSize="13"
+                                   VerticalAlignment="Center" Foreground="{ThemeResource JackTextBrush}" />
+                        <TextBlock Grid.Column="2" Text="{x:Bind Detail}" FontSize="12" FontFamily="Cascadia Code, Consolas"
+                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" TextAlignment="Right"
+                                   Foreground="{ThemeResource JackTextDimBrush}" />
                     </Grid>
                 </Border>
             </DataTemplate>
@@ -317,27 +317,31 @@
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
                             <TextBlock x:Name="ConversationTitle" TextTrimming="CharacterEllipsis" FontSize="18"
                                        FontWeight="SemiBold" Foreground="{ThemeResource JackTextBrush}" />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
                                 <Border CornerRadius="7" Padding="8,2" Background="{ThemeResource JackPanelStrongBrush}">
                                     <TextBlock x:Name="ConversationProvider" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{ThemeResource JackTextBrush}" />
                                 </Border>
-                                <TextBlock x:Name="ConversationPath" VerticalAlignment="Center" FontSize="12"
+                                <TextBlock x:Name="ConversationPath" Grid.Column="1" VerticalAlignment="Center" FontSize="12"
                                            FontFamily="Cascadia Code, Consolas" TextTrimming="CharacterEllipsis"
                                            Foreground="{ThemeResource JackTextDimBrush}" />
-                            </StackPanel>
+                            </Grid>
                         </StackPanel>
                         <Border Grid.Column="2" CornerRadius="14" Padding="11,5" VerticalAlignment="Center"
                                 Background="#26FFB020">
                             <StackPanel Orientation="Horizontal" Spacing="7">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource JackAmberBrush}" VerticalAlignment="Center" />
                                 <TextBlock Text="CLI sin conectar" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{StaticResource JackAmberBrush}" />
+                                           Foreground="{ThemeResource JackAmberTextBrush}" />
                             </StackPanel>
                         </Border>
                     </Grid>
 
-                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                    <ScrollViewer x:Name="TranscriptScroll" Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel MaxWidth="780" Margin="24,22" Spacing="14" HorizontalAlignment="Stretch">
                             <Border x:Name="ReadyCard" CornerRadius="16" Padding="20" BorderThickness="1"
                                     Background="{ThemeResource JackPanelBrush}" BorderBrush="{ThemeResource JackStrokeBrush}">

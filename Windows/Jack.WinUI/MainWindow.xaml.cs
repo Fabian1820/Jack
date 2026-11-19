@@ -144,6 +144,12 @@ public sealed partial class MainWindow : Window
         demoTurns.TryGetValue(conversation.Id, out var turns);
         Transcript.ItemsSource = turns;
         ReadyCard.Visibility = turns is null ? Visibility.Visible : Visibility.Collapsed;
+        // Como en un chat, lo más reciente queda a la vista.
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            TranscriptScroll.UpdateLayout();
+            TranscriptScroll.ChangeView(null, TranscriptScroll.ScrollableHeight, null, true);
+        });
     }
 
     private bool isCreating;

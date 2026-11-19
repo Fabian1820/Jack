@@ -17,6 +17,7 @@
                     <SolidColorBrush x:Key="JackTextBrush" Color="#F3F5FA" />
                     <SolidColorBrush x:Key="JackTextDimBrush" Color="#A8B0C8" />
                     <SolidColorBrush x:Key="JackTextFaintBrush" Color="#6F7896" />
+                    <SolidColorBrush x:Key="JackAmberTextBrush" Color="#FFB020" />
                     <LinearGradientBrush x:Key="JackTitleBrush" StartPoint="0,0" EndPoint="1,0.4">
                         <GradientStop Color="#FFFFFF" Offset="0" />
                         <GradientStop Color="#FFC49A" Offset="1" />
@@ -30,6 +31,7 @@
                     <SolidColorBrush x:Key="JackTextBrush" Color="#F3F5FA" />
                     <SolidColorBrush x:Key="JackTextDimBrush" Color="#A8B0C8" />
                     <SolidColorBrush x:Key="JackTextFaintBrush" Color="#6F7896" />
+                    <SolidColorBrush x:Key="JackAmberTextBrush" Color="#FFB020" />
                     <LinearGradientBrush x:Key="JackTitleBrush" StartPoint="0,0" EndPoint="1,0.4">
                         <GradientStop Color="#FFFFFF" Offset="0" />
                         <GradientStop Color="#FFC49A" Offset="1" />
@@ -43,6 +45,7 @@
                     <SolidColorBrush x:Key="JackTextBrush" Color="#12172A" />
                     <SolidColorBrush x:Key="JackTextDimBrush" Color="#566080" />
                     <SolidColorBrush x:Key="JackTextFaintBrush" Color="#8B93AD" />
+                    <SolidColorBrush x:Key="JackAmberTextBrush" Color="#9A5B00" />
                     <LinearGradientBrush x:Key="JackTitleBrush" StartPoint="0,0" EndPoint="1,0.4">
                         <GradientStop Color="#12172A" Offset="0" />
                         <GradientStop Color="#D9480F" Offset="1" />
