@@ -41,7 +41,7 @@ struct MainWindowView: View {
     @AppStorage("explorerVisible") private var explorerVisible = false
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @AppStorage("openTabs") private var openTabsValue = ""
-    @AppStorage("transcriptMonospaced") private var monospaced = true
+    @AppStorage("transcriptMonospaced") private var monospaced = false
     @AppStorage(InterfaceStyle.key) private var interfaceStyle = InterfaceStyle.basic
     @State private var newChatID = UUID()
     /// Automations mode replaces the chat area until an agent is chosen.
@@ -184,7 +184,8 @@ struct MainWindowView: View {
             var layout = PaneLayout(encoded: paneLayoutValue).keeping(Set(ids))
             let before = Set(previous)
             for conversation in store.conversations where !before.contains(conversation.id) {
-                guard let parent = conversation.parentID else { continue }
+                // Normal shows sub-agents in the popup instead.
+                guard let parent = conversation.parentID, store.lightModeEnabled else { continue }
                 if parent == store.selectedID {
                     layout = layout.opening(conversation.id, under: .main)
                 } else if layout.contains(parent) {
@@ -245,6 +246,11 @@ struct MainWindowView: View {
         .onChange(of: paneLayoutValue, initial: true) { _, _ in store.showInPanes(paneLayout.agents) }
         .onAppear {
             workspace.attach = { id, paths in attach(paths, to: id) }
+            store.integratedTools = { name, arguments, conversation in
+                let result = await workspace.agentCall(name, arguments, conversation: conversation)
+                if conversation.id == store.selectedID { workspaceVisible = true }
+                return result
+            }
             workspace.sendToAgent = { id, text, files, now in sendToAgent(text, files: files, to: id, now: now) }
             if drafts.isEmpty { drafts = memory.drafts }
             if attachments.isEmpty { attachments = memory.attachments }
@@ -451,7 +457,8 @@ struct MainWindowView: View {
             onShowClaudeChat: store.lightModeEnabled ? nil : {
                 showingArtifacts = false; showingAutomations = false; showingOffice = false; showingClaudeCloud = false; showingClaudeChat = true
             },
-            claudeChatActive: showingClaudeChat
+            claudeChatActive: showingClaudeChat,
+            onRespond: store.lightModeEnabled ? nil : { id, approval, allow in store.respond(conversationID: id, approvalID: approval, allow: allow) }
         )
     }
 
@@ -550,8 +557,17 @@ struct MainWindowView: View {
         if effectiveInterfaceStyle == .ice || embedded != nil {
             chatWithPanes
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                .overlay(alignment: .topTrailing) { subagentPopup(top: 8) }
         } else {
             basicCenterColumn
+                .overlay(alignment: .topTrailing) { subagentPopup(top: JackMetrics.stripHeight + 6) }
+        }
+    }
+
+    @ViewBuilder private func subagentPopup(top: CGFloat) -> some View {
+        if !store.lightModeEnabled {
+            SubagentPopup(children: store.conversations.filter { $0.parentID != nil }, statuses: store.statuses, onOpen: openInPane)
+                .padding(.top, top).padding(.trailing, 12)
         }
     }
 
@@ -866,11 +882,19 @@ struct MainWindowView: View {
     }
 
     /// Widest line of the transcript and composer; wider lines are hard to read.
-    static let columnWidth: CGFloat = 900
+    static let columnWidth: CGFloat = 1100
+
+    /// A permission request with no questions and not a plan, so Permitir / Denegar answers it (an "always allow" choice stays in the chat).
+    private func simpleApproval(_ id: UUID) -> SidebarApproval? {
+        guard !store.lightModeEnabled,
+              let request = store.approvals[id]?.first(where: { $0.questions.isEmpty && !$0.isPlan }) else { return nil }
+        return SidebarApproval(id: request.id, title: request.title)
+    }
 
     private var sidebarRows: [SidebarRowModel] {
         let titles = Dictionary(uniqueKeysWithValues: store.conversations.map { ($0.id, $0.title) })
-        return store.conversations.map { conversation in
+        // Normal: sub-agents live in the popup, not in the sidebar.
+        return store.conversations.filter { store.lightModeEnabled || $0.parentID == nil }.map { conversation in
             let status = store.statuses[conversation.id] ?? .idle
             return SidebarRowModel(
                 id: conversation.id,
@@ -887,7 +911,8 @@ struct MainWindowView: View {
                 pending: conversation.isPending == true,
                 isRemote: conversation.remote != nil,
                 parentID: conversation.parentID,
-                parentTitle: conversation.parentID.flatMap { titles[$0] }
+                parentTitle: conversation.parentID.flatMap { titles[$0] },
+                approval: simpleApproval(conversation.id)
             )
         }
     }
@@ -969,6 +994,8 @@ struct MainWindowView: View {
         let hasContent = !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attached.isEmpty
         let mentionOptions = mentionOptions(for: conversation)
         let canSend = (!busy || steerable) && hasContent
+        let dictationPhase = dictation.phase(for: conversation.id)
+        let dictating = dictationPhase != .idle
         let design: Font.Design = monospaced ? .monospaced : .default
         let textSize: CGFloat = monospaced ? 12.5 : 13
         return VStack(alignment: .leading, spacing: 6) {
@@ -1020,9 +1047,13 @@ struct MainWindowView: View {
                     }
                 }
             }
+            if dictating {
+                DictationLiveView(dictation: dictation, transcribing: dictationPhase != .recording(conversation.id),
+                                  onCancel: { dictation.cancel() },
+                                  onStop: { dictation.toggle(for: conversation.id) { insertDictation($0, into: conversation.id) } })
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            }
             HStack(alignment: .top, spacing: 8) {
-                Text("›").font(.system(size: textSize + 2, weight: .bold, design: .monospaced))
-                    .foregroundStyle(busy && !steerable ? JackPalette.faint : JackPalette.accent)
                 ZStack(alignment: .topLeading) {
                     // Invisible copy of the draft sizes the editor to its content.
                     Text(draft.isEmpty ? " " : draft + " ")
@@ -1127,14 +1158,30 @@ struct MainWindowView: View {
                         return .ignored
                     }
                 }
-                .frame(minHeight: 18, maxHeight: 200)
+                .frame(minHeight: 36, maxHeight: 220)
                 .fixedSize(horizontal: false, vertical: true)
             }
+            // The message box makes way for the live dictation view and returns, with its text, afterwards.
+            .opacity(dictating ? 0 : 1)
+            .frame(height: dictating ? 0 : nil)
+            .clipped()
+            .allowsHitTesting(!dictating)
+            .accessibilityHidden(dictating)
+            .animation(.snappy(duration: 0.25), value: dictating)
 
             HStack(spacing: 8) {
                 HStack(spacing: 6) {
+                    Button {
+                        attach(AttachmentDrop.choose(from: conversation.projectPath), to: conversation.id)
+                    } label: {
+                        Image(systemName: "paperclip").font(.system(size: 12.5, weight: .medium))
+                            .frame(width: 24, height: 24).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain).foregroundStyle(JackPalette.muted)
+                    .help("Adjuntar archivos (también puedes arrastrarlos al chat)")
+                    .accessibilityLabel("Adjuntar archivos")
                     ContextLogoButton(store: store, conversation: conversation, busy: busy)
-                    ChatModelPicker(allowsBypass: true, allowsCloud: true, store: store, conversation: conversation, busy: busy)
+                    ChatModelPicker(allowsBypass: true, allowsCloud: true, modern: true, store: store, conversation: conversation, busy: busy)
                 }
                 .font(.system(size: 11, weight: .medium)).foregroundStyle(JackPalette.muted)
                 Spacer()
@@ -1169,15 +1216,6 @@ struct MainWindowView: View {
                 .buttonStyle(.plain).foregroundStyle(JackPalette.muted)
                 .help(conversation.provider == .claude ? "Preguntar con Haiku y un extracto reciente, sin interrumpir al agente (⌥↩)" : "Preguntar al margen sin interrumpir al agente ni entrar en su historial (⌥↩)")
                 .accessibilityLabel("Preguntar al margen")
-                Button {
-                    attach(AttachmentDrop.choose(from: conversation.projectPath), to: conversation.id)
-                } label: {
-                    Image(systemName: "paperclip").font(.system(size: 12.5, weight: .medium))
-                        .frame(width: 24, height: 24).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain).foregroundStyle(JackPalette.muted)
-                .help("Adjuntar archivos (también puedes arrastrarlos al chat)")
-                .accessibilityLabel("Adjuntar archivos")
                 VoiceDictationButton(dictation: dictation, conversationID: conversation.id) { text in
                     insertDictation(text, into: conversation.id)
                 } report: { store.errorMessage = $0 }
@@ -1198,7 +1236,7 @@ struct MainWindowView: View {
                         Image(systemName: "arrow.up").font(.system(size: 11, weight: .bold))
                             .foregroundStyle(canSend ? Color.white : JackPalette.faint)
                             .frame(width: 24, height: 24)
-                            .background(canSend ? JackPalette.accent : JackPalette.panelStrong, in: RoundedRectangle(cornerRadius: ice ? 12 : 6, style: .continuous))
+                            .background(canSend ? JackPalette.accent : JackPalette.panelStrong, in: Circle())
                     }
                     .buttonStyle(.plain)
                     .disabled(!canSend)
@@ -1207,12 +1245,12 @@ struct MainWindowView: View {
                 }
             }
         }
-        .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 8)
+        .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 9)
         // Ice: a glass field floating over the transcript, as in the system's own apps.
-        .jackGlass(in: RoundedRectangle(cornerRadius: ice ? 18 : 8, style: .continuous), basic: JackPalette.panel)
+        .jackGlass(in: RoundedRectangle(cornerRadius: ice ? 18 : 16, style: .continuous), basic: JackPalette.panel)
         .overlay {
             if !ice {
-                RoundedRectangle(cornerRadius: JackPalette.radius(8), style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(focusedComposer == conversation.id ? JackPalette.accent.opacity(0.45) : JackPalette.hairline, lineWidth: JackPalette.borderWidth(1))
             }
         }

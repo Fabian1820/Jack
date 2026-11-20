@@ -173,6 +173,8 @@ enum AntigravityTerminalError: LocalizedError {
         artifactLibrary = library
         return library
     }
+    /// Runs the `browser_*` and `terminal_*` tools in the app's own browser and terminal; set by the window.
+    public var integratedTools: ((String, [String: Any], ChatConversation) async -> (String, Bool))?
     private var notebookWorkspace: NotebookWorkspace?
     public var notebooks: NotebookWorkspace {
         if let notebookWorkspace { return notebookWorkspace }

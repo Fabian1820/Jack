@@ -12,7 +12,10 @@ struct ChatMessageRow: View, Equatable {
     let isStreaming: Bool
     var topSpacing: CGFloat = 0
     var monospaced = true
+    /// Normal's chat: the user's messages in a bubble on the right, the agent's across the left without a marker.
+    var bubbles = false
 
+    private var inset: CGFloat { bubbles ? 0 : chatActivityInset }
     private var design: Font.Design { monospaced ? .monospaced : .default }
     private var textSize: CGFloat { monospaced ? 12.5 : 13 }
 
@@ -22,7 +25,7 @@ struct ChatMessageRow: View, Equatable {
 
     @ViewBuilder private var content: some View {
         switch message.role {
-        case "tool": ToolActivityRow(message: message, projectPath: projectPath, design: design).padding(.leading, chatActivityInset - 6)
+        case "tool": ToolActivityRow(message: message, projectPath: projectPath, design: design).padding(.leading, bubbles ? 0 : chatActivityInset - 6)
         case "jack":
             VStack(alignment: .leading, spacing: 4) {
                 Text("Jack").font(.system(size: 11, weight: .semibold)).foregroundStyle(JackPalette.accent)
@@ -34,13 +37,42 @@ struct ChatMessageRow: View, Equatable {
         case "reasoning":
             // Providers often emit empty reasoning blocks; only show them while the agent is thinking.
             if isStreaming || !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                ReasoningRow(text: message.text, isStreaming: isStreaming, design: design).padding(.leading, chatActivityInset)
+                ReasoningRow(text: message.text, isStreaming: isStreaming, design: design).padding(.leading, inset)
             }
         default: assistantMessage
         }
     }
 
-    private var userMessage: some View {
+    @ViewBuilder private var userMessage: some View {
+        if bubbles { userBubble } else { userLine }
+    }
+
+    private var userBubble: some View {
+        HStack(spacing: 0) {
+            Spacer(minLength: 64)
+            VStack(alignment: .trailing, spacing: 6) {
+                if !message.text.isEmpty {
+                    Text(message.text)
+                        .font(.system(size: textSize + 0.5, design: design))
+                        .lineSpacing(3)
+                        .multilineTextAlignment(.leading)
+                        .textSelection(.enabled)
+                }
+                if let files = message.attachments, !files.isEmpty {
+                    FlowLayout(spacing: 6) {
+                        ForEach(files, id: \.self) { AttachmentChip(path: $0) }
+                    }
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .background(JackPalette.panelStrong, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .frame(maxWidth: 720, alignment: .trailing)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .contextMenu { copyButton(message.text) }
+    }
+
+    private var userLine: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text("›").font(.system(size: textSize + 1, weight: .bold, design: .monospaced)).foregroundStyle(JackPalette.accent)
             VStack(alignment: .leading, spacing: 6) {
@@ -69,9 +101,11 @@ struct ChatMessageRow: View, Equatable {
 
     private var assistantMessage: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Circle().fill(Color.primary.opacity(0.85)).frame(width: 6, height: 6)
-                .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 0.5 }
-                .frame(width: 8)
+            if !bubbles {
+                Circle().fill(Color.primary.opacity(0.85)).frame(width: 6, height: 6)
+                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 0.5 }
+                    .frame(width: 8)
+            }
             if message.text.isEmpty, isStreaming {
                 ProgressView().controlSize(.small)
             } else {
@@ -90,7 +124,7 @@ struct ChatMessageRow: View, Equatable {
         .padding(11)
         .background(JackPalette.red.opacity(0.08), in: RoundedRectangle(cornerRadius: JackPalette.radius(6)))
         .overlay(RoundedRectangle(cornerRadius: JackPalette.radius(6)).strokeBorder(JackPalette.red.opacity(0.25), lineWidth: 0.5))
-        .padding(.leading, chatActivityInset)
+        .padding(.leading, inset)
     }
 
     private func copyButton(_ text: String) -> some View {
@@ -127,9 +161,10 @@ private struct ReasoningRow: View {
                         .font(.system(size: 12, design: design)).italic()
                         .lineSpacing(2)
                         .foregroundStyle(JackPalette.muted)
-                        .lineLimit(expanded ? nil : 4)
+                        // Live, the whole thought is shown as it arrives; once the agent moves on it folds to a preview.
+                        .lineLimit(expanded || isStreaming ? nil : 4)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    if isLong {
+                    if isLong, !isStreaming {
                         Button(expanded ? "Mostrar menos" : "Mostrar más") {
                             withAnimation(.snappy(duration: 0.2)) { expanded.toggle() }
                         }

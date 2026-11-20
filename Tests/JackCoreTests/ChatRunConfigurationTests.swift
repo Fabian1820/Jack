@@ -49,6 +49,18 @@ final class ChatRunConfigurationTests: XCTestCase {
         conversation.mode = ChatRunMode.bypass.id
         XCTAssertEqual(ChatRunConfiguration.claudeSettings(conversation).prefix(2), ["--permission-mode", "bypassPermissions"])
     }
+    @MainActor func testNormalBlocksNativeSubagentsWhileLightKeepsThem() throws {
+        let chat = ChatConversation(projectPath: "/tmp", provider: .claude)
+        let normal = ChatRunConfiguration.claudeRemoteArgs(conversation: chat, delegation: nil)
+        XCTAssertEqual(normal[normal.firstIndex(of: "--disallowedTools")! + 1], "Agent,Task")
+        XCTAssertFalse(ChatRunConfiguration.claudeRemoteArgs(conversation: chat, delegation: nil, lightMode: true).contains("--disallowedTools"))
+        XCTAssertEqual(normal[normal.firstIndex(of: "--thinking-display")! + 1], "summarized")
+        XCTAssertFalse(ChatRunConfiguration.claudeRemoteArgs(conversation: chat, delegation: nil, lightMode: true).contains("--thinking-display"))
+        let config = try XCTUnwrap(ChatRunConfiguration.openCodeConfig(chat, delegation: nil, blockNativeSubagents: true))
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(config.utf8)) as? [String: Any])
+        XCTAssertEqual((object["permission"] as? [String: Any])?["task"] as? String, "deny")
+        XCTAssertNil(ChatRunConfiguration.openCodeConfig(chat, delegation: nil))
+    }
     @MainActor func testNormalDisablesSuggestionsWhileLightKeepsExistingLaunch() {
         var chat = ChatConversation(projectPath: "/tmp", provider: .claude)
         for parent in [nil, UUID()] as [UUID?] {

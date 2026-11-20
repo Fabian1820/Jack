@@ -1,8 +1,8 @@
 import AVFoundation
 
-/// The console's sounds. They are the real system sound files when the app carries them (`Resources/CodeOS/Sounds`, bundled at build time)
-/// or the user has them in `~/Library/Application Support/Jack/CodeOS/Sounds`, one file per cue, named after it. They are not in the
-/// repository. Without them it falls back to bell notes synthesised in code. Nothing plays on its own: every sound answers a key press.
+/// The console's sounds: original 8-bit blips (`Resources/CodeOS/Sounds`, bundled at build time, made by `Scripts/make-codeos-sounds.py`),
+/// or the user's own files in `~/Library/Application Support/Jack/CodeOS/Sounds`, one file per cue, named after it. Without any it
+/// falls back to bell notes synthesised in code. Nothing plays on its own: every sound answers a key press.
 @MainActor final class CodeOSSound {
     static let shared = CodeOSSound()
 

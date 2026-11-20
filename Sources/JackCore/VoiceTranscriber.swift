@@ -115,6 +115,13 @@ public final class VoiceRecorder: NSObject {
 
     public var isRecording: Bool { recorder?.isRecording == true }
 
+    /// Input loudness from 0 (silence) to 1, for a live waveform; about -50 dB or less reads as silence.
+    public func level() -> Float {
+        guard let recorder, recorder.isRecording else { return 0 }
+        recorder.updateMeters()
+        return max(0, min(1, (recorder.averagePower(forChannel: 0) + 50) / 50))
+    }
+
     public static func requestAccess() async -> Bool {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized: return true
@@ -134,6 +141,7 @@ public final class VoiceRecorder: NSObject {
             AVLinearPCMIsBigEndianKey: false,
         ]
         let recorder = try AVAudioRecorder(url: url, settings: settings)
+        recorder.isMeteringEnabled = true
         guard recorder.record(forDuration: VoiceConfig.maxSeconds) else { throw VoiceError.recordingFailed }
         self.recorder = recorder
         fileURL = url

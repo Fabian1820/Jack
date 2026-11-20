@@ -16,6 +16,11 @@ struct ChatTranscript: View, Equatable {
     /// The user is dragging, flicking or wheeling the transcript; only they can stop the chat from following.
     @State private var userScrolling = false
 
+    /// More air where the speaker changes, so each turn reads as its own block.
+    private func turnSpacing(_ previous: String, _ current: String) -> CGFloat {
+        previous == "user" || current == "user" ? 26 : ChatRowSpacing.between(previous, current)
+    }
+
     private static let bottomID = "jack-chat-bottom"
 
     static func == (lhs: Self, rhs: Self) -> Bool {
@@ -59,8 +64,9 @@ struct ChatTranscript: View, Equatable {
                                 provider: conversation.provider,
                                 projectPath: conversation.projectPath,
                                 isStreaming: active && message.id == lastID,
-                                topSpacing: index == start ? 0 : ChatRowSpacing.between(conversation.messages[index - 1].role, message.role),
-                                monospaced: monospaced
+                                topSpacing: index == start ? 0 : turnSpacing(conversation.messages[index - 1].role, message.role),
+                                monospaced: monospaced,
+                                bubbles: true
                             )
                             .equatable()
                             .id(message.id)

@@ -319,7 +319,8 @@ final class CodexChatDriver: ProcessChatDriver {
             }
         }
         guard let executable = ExecutableResolver.resolve("codex", override: executableOverride ?? UserDefaults.standard.string(forKey: "providerExecutablePath.codex")) else { throw ChatDriverError.executableMissing("codex") }
-        let arguments = ["app-server", "--listen", "stdio://"] + (delegation.map(ChatRunConfiguration.codexDelegation) ?? [])
+        // Normal mode: subagents only through Jack's `create_agent`, never Codex's own.
+        let arguments = ["app-server", "--listen", "stdio://"] + (energySaving ? [] : ["-c", "features.multi_agent=false"]) + (delegation.map(ChatRunConfiguration.codexDelegation) ?? [])
         // The token travels in the environment, not in the command line other processes can read.
         let environment = (delegation.map { ["JACK_MCP_TOKEN": $0.token] } ?? [:]).merging(ProgressFiles.environment(for: conversation.id)) { _, new in new }
         let process = try begin(executable, arguments: arguments, directory: conversation.projectPath, environment: environment)
@@ -1436,6 +1437,8 @@ private final class QoderChatDriver: ProcessChatDriver {
 }
 
 private final class OpenCodeChatDriver: ProcessChatDriver {
+    private var energySaving = false
+    override func setEnergySaving(_ enabled: Bool) { energySaving = enabled }
     private var baseURL: URL?
     private var sessionID: String?
     private var serverGeneration: UUID?
@@ -1454,7 +1457,7 @@ private final class OpenCodeChatDriver: ProcessChatDriver {
         let port = try availableLoopbackPort()
         let password = UUID().uuidString + UUID().uuidString
         var environment = ["OPENCODE_SERVER_USERNAME": "jack", "OPENCODE_SERVER_PASSWORD": password]
-        if let config = ChatRunConfiguration.openCodeConfig(conversation, delegation: delegation) { environment["OPENCODE_CONFIG_CONTENT"] = config }
+        if let config = ChatRunConfiguration.openCodeConfig(conversation, delegation: delegation, blockNativeSubagents: !energySaving) { environment["OPENCODE_CONFIG_CONTENT"] = config }
         environment.merge(ProgressFiles.environment(for: conversation.id)) { _, new in new }
         let process = try begin(executable, arguments: ["serve", "--hostname", "127.0.0.1", "--port", String(port)] + OpenCodeCLI.pureArguments(executable: executable), directory: conversation.projectPath, environment: environment)
         do {
@@ -1989,14 +1992,18 @@ enum ChatRunConfiguration {
          "-c", "mcp_servers.jack.default_tools_approval_mode=\"approve\""]
     }
     /// Inline OpenCode config: the Jack MCP server when delegating and the extra folders it may touch.
-    static func openCodeConfig(_ conversation: ChatConversation, delegation: ChatDelegation?) -> String? {
+    static func openCodeConfig(_ conversation: ChatConversation, delegation: ChatDelegation?, blockNativeSubagents: Bool = false) -> String? {
         var config: [String: Any] = delegation.map(openCodeDelegationConfig) ?? [:]
         let directories = conversation.additionalDirectories + conversation.attachmentDirectories
+        var permission: [String: Any] = [:]
         if !directories.isEmpty {
             var rules: [String: String] = [:]
             for directory in directories { rules[directory] = "allow"; rules[directory + "/**"] = "allow" }
-            config["permission"] = ["external_directory": rules]
+            permission["external_directory"] = rules
         }
+        // Normal mode: subagents only through Jack's `create_agent`, never OpenCode's own `task` tool.
+        if blockNativeSubagents { permission["task"] = "deny" }
+        if !permission.isEmpty { config["permission"] = permission }
         guard !config.isEmpty else { return nil }
         return (try? JSONSerialization.data(withJSONObject: config)).map { String(decoding: $0, as: UTF8.self) } ?? "{}"
     }
@@ -2062,6 +2069,8 @@ enum ChatRunConfiguration {
                     // Echoes each message when the agent reads it, so a queued message moves into the chat at that moment.
                     "--replay-user-messages"] + (lightMode ? ["--prompt-suggestions"] : ["--prompt-suggestions", "false"])
             + claudeSettings(conversation)
+            // Normal mode: subagents only through Jack's `create_agent`, never Claude's own Agent/Task.
+            + (lightMode ? [] : ["--disallowedTools", "Agent,Task", "--thinking-display", "summarized"])
         if let saved = conversation.sessionID, !saved.isEmpty { args += ["--resume", saved] }
         args += (delegation.map(claudeDelegation) ?? [])
             + (agentInstructions(delegating: delegation?.delegates == true, images: delegation?.images == true, notebooks: delegation?.notebooks == true, normalMode: delegation?.normalMode == true, includeProgress: conversation.remote == nil).map { ["--append-system-prompt", $0] } ?? [])
@@ -2071,7 +2080,8 @@ enum ChatRunConfiguration {
     static func agentInstructions(delegating: Bool, images: Bool = false, notebooks: Bool = false, normalMode: Bool = false, includeProgress: Bool = true) -> String? {
         let delegationInstructions = normalMode ? ChatDelegation.instructions + "\n\n" + ChatDelegation.normalDelegationInstructions : ChatDelegation.instructions
         let parts = [(includeProgress && ProgressFiles.isAvailable) ? ProgressFiles.helperInstructions : nil, delegating ? delegationInstructions : nil,
-                     images ? ChatDelegation.imageInstructions : nil, notebooks ? NotebookWorkspace.agentInstructions : nil, normalMode ? ArtifactLibrary.agentInstructions : nil].compactMap { $0 }
+                     images ? ChatDelegation.imageInstructions : nil, notebooks ? NotebookWorkspace.agentInstructions : nil, normalMode ? ArtifactLibrary.agentInstructions : nil,
+                     normalMode ? IntegratedTools.instructions : nil].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: "\n\n")
     }
     static func claudeSettings(_ conversation: ChatConversation) -> [String] {

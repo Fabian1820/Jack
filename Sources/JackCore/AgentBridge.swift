@@ -47,6 +47,7 @@ public struct ChatDelegation: Equatable {
     /// Added only to Normal runs. A task is the boundary of shared context: never copy this conversation's history.
     public static let normalDelegationInstructions = """
     Normal-mode delegation rules:
+    - Never use your own built-in subagent tools (Agent, Task, spawn). Every sub-agent must be started with create_agent so it runs inside Jack.
     - Treat every agent_id returned by Jack as a structured reference. Keep it and use that ID with send_message, get_agent_result and stop_agent; do not identify agents by title.
     - Give create_agent a self-contained task and only the short, relevant facts or paths it needs in its optional context field. Jack does not share your transcript with it.
     - Reuse an existing agent only when the user explicitly names one with an @ mention, or when that agent is already one of your children. Never search or expose unrelated conversations.
@@ -189,7 +190,7 @@ public struct ChatDelegation: Equatable {
             let delegationTools = allowed.normalMode && store?.lightModeEnabled == false ? Self.normalTools : Self.tools
             let tools = (allowed.delegates ? delegationTools : []) + (allowed.images ? [Self.imageTool] : [])
                 + (allowed.notebooks && store?.lightModeEnabled == false ? Self.notebookTools : [])
-                + (allowed.normalMode && store?.lightModeEnabled == false ? Self.artifactTools : [])
+                + (allowed.normalMode && store?.lightModeEnabled == false ? Self.artifactTools + Self.integratedTools : [])
             return Self.result(id: id, ["tools": tools])
         case "tools/call":
             let name = params["name"] as? String ?? ""
@@ -288,6 +289,12 @@ public struct ChatDelegation: Equatable {
                 return ("Notebook tools are available only in Normal mode.", true)
             }
             return await notebookCall(name, arguments: arguments, conversation: parent, workspace: store.notebooks)
+        }
+        if name.hasPrefix("browser_") || name.hasPrefix("terminal_") {
+            guard permissions[caller]?.normalMode == true, !store.lightModeEnabled, let host = store.integratedTools else {
+                return ("Browser and terminal tools are available only in Normal mode.", true)
+            }
+            return await host(name, arguments, parent)
         }
         if name == "generate_image" { return await generateImage(arguments, caller: parent, store: store) }
         guard permissions[caller]?.delegates ?? true else { return ("Only the agent the user talks to can manage other agents.", true) }

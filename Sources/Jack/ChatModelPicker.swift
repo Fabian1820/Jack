@@ -6,6 +6,8 @@ struct ChatModelPicker: View {
     var allowsBypass = false
     /// The cloud-linking control appears only on Normal surfaces.
     var allowsCloud = false
+    /// Normal's chat: effort as a slider and the mode as a pill.
+    var modern = false
     @State private var confirmingBypass = false
     @ObservedObject var store: ChatStore
     let conversation: ChatConversation
@@ -40,14 +42,62 @@ struct ChatModelPicker: View {
     }
 
     /// Claude Code's colors for the modes that change what it may do without asking.
-    private var modeColor: Color {
+    private var modeColor: Color { modeColor(for: conversation.mode) }
+    private func modeColor(for mode: String?) -> Color {
         guard conversation.provider == .claude || conversation.provider == .stellar || conversation.provider == .antigravity || conversation.provider == .qoder else { return JackPalette.muted }
-        switch conversation.mode {
+        switch mode {
         case "plan": return JackPalette.blue
         case "acceptEdits", "accept-edits": return JackPalette.purple
         case "auto", "dontAsk": return JackPalette.amber
         case ChatRunMode.bypass.id: return JackPalette.red
         default: return JackPalette.muted
+        }
+    }
+    private var modeSymbol: String { modeSymbol(for: conversation.mode) }
+    private func modeSymbol(for mode: String?) -> String {
+        switch mode {
+        case "plan": "list.bullet.clipboard"
+        case "acceptEdits", "accept-edits": "pencil.line"
+        case "auto", "dontAsk": "bolt.fill"
+        case ChatRunMode.bypass.id: "exclamationmark.shield.fill"
+        default: "hand.raised"
+        }
+    }
+    private func modeSubtitle(_ id: String?) -> String? {
+        switch id {
+        case nil: "El modo que trae el agente."
+        case "manual": "Pide permiso para editar y ejecutar."
+        case "default": "Pide permiso cuando hace falta."
+        case "plan": "Propone un plan antes de tocar nada."
+        case "auto": "Trabaja sin preguntar dentro del proyecto."
+        case "acceptEdits", "accept-edits": "Edita archivos sin preguntar; pide para comandos."
+        case "dontAsk": "No pregunta: solo hace lo ya permitido."
+        case ChatRunMode.bypass.id: "Sin ninguna confirmación. Solo en proyectos de confianza."
+        default: nil
+        }
+    }
+    private func modeOption(id: String?, title: String) -> ModePopupButton.Option {
+        .init(id: id, title: title, subtitle: modeSubtitle(id), symbol: modeSymbol(for: id), color: modeColor(for: id))
+    }
+    /// Choosing a mode; Bypass asks first.
+    private func chooseMode(_ id: String?) {
+        if id == ChatRunMode.bypass.id, conversation.mode != id { confirmingBypass = true }
+        else { store.updateMode(id: conversation.id, mode: id, supported: modes) }
+    }
+    private var modePopup: some View {
+        let options = (conversation.provider == .opencode ? [modeOption(id: nil, title: "Predeterminado")] : []) + modes.map { modeOption(id: $0.id, title: $0.title) }
+        return ModePopupButton(options: options, selected: conversation.mode, current: modeOption(id: conversation.mode, title: modeTitle), disabled: busy && !store.changesModeLive(conversation.id),
+                               footer: conversation.provider == .claude ? "⇧⇥ cambia de modo, también mientras trabaja." : nil) { chooseMode($0.id) }
+            .help(modeHelp)
+    }
+    private var effortSlider: some View {
+        let isOpenCode = conversation.provider == .opencode
+        let stops = (isOpenCode ? [EffortSlider.Stop(id: nil, title: "Auto")] : [])
+            + efforts.map { EffortSlider.Stop(id: $0, title: isOpenCode ? $0 : ChatModelChoice.effortTitle($0)) }
+        let saved = isOpenCode ? conversation.variant : conversation.effort
+        return EffortPopupButton(stops: stops, selected: stops.firstIndex { $0.id == saved } ?? 0, disabled: busy) { stop in
+            if isOpenCode { store.updateVariant(id: conversation.id, variant: stop.id, supported: efforts) }
+            else if let id = stop.id { store.updateSettings(id: conversation.id, model: conversation.model, effort: id) }
         }
     }
     private var modeHelp: String {
@@ -159,7 +209,8 @@ struct ChatModelPicker: View {
             .onChange(of: custom) { _, shown in
                 if !shown { cloudLinkRequestID = UUID(); cloudLinkLoading = false }
             }
-            if conversation.provider == .opencode || !efforts.isEmpty { Menu {
+            if modern, conversation.provider == .opencode || !efforts.isEmpty { effortSlider }
+            else if conversation.provider == .opencode || !efforts.isEmpty { Menu {
                 if conversation.provider == .opencode {
                     Button {
                         store.updateVariant(id: conversation.id, variant: nil, supported: efforts)
@@ -190,26 +241,36 @@ struct ChatModelPicker: View {
                 .menuStyle(.borderlessButton).fixedSize()
                 .help("Esfuerzo de razonamiento")
                 .disabled(busy) }
-            Menu {
-                if conversation.provider == .opencode {
-                    Button("Predeterminado") { store.updateMode(id: conversation.id, mode: nil, supported: modes) }
-                }
-                ForEach(modes) { mode in
-                    Button {
-                        if mode.id == ChatRunMode.bypass.id, conversation.mode != mode.id { confirmingBypass = true }
-                        else { store.updateMode(id: conversation.id, mode: mode.id, supported: modes) }
-                    } label: {
-                        if mode.id == conversation.mode { Label(mode.title, systemImage: "checkmark") }
-                        else { Text(mode.title) }
+            Group {
+                if modern { modePopup } else {
+                Menu {
+                    if conversation.provider == .opencode {
+                        Button("Predeterminado") { store.updateMode(id: conversation.id, mode: nil, supported: modes) }
                     }
+                    ForEach(modes) { mode in
+                        Button {
+                            if mode.id == ChatRunMode.bypass.id, conversation.mode != mode.id { confirmingBypass = true }
+                            else { store.updateMode(id: conversation.id, mode: mode.id, supported: modes) }
+                        } label: {
+                            if mode.id == conversation.mode { Label(mode.title, systemImage: "checkmark") }
+                            else { Text(mode.title) }
+                        }
+                    }
+                    if conversation.provider == .opencode && modes.isEmpty {
+                        Text(loadingModels ? "Cargando modos…" : "Actualiza el catálogo para cargar los modos")
+                    }
+                } label: {
+                    if modern {
+                        Label(modeTitle, systemImage: modeSymbol).foregroundStyle(modeColor)
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(modeColor.opacity(0.12), in: Capsule())
+                    } else { Text(modeTitle).foregroundStyle(modeColor) }
                 }
-                if conversation.provider == .opencode && modes.isEmpty {
-                    Text(loadingModels ? "Cargando modos…" : "Actualiza el catálogo para cargar los modos")
+                .menuStyle(.borderlessButton).fixedSize()
+                .help(modeHelp)
+                .disabled(busy && !store.changesModeLive(conversation.id))
                 }
-            } label: { Text(modeTitle).foregroundStyle(modeColor) }
-            .menuStyle(.borderlessButton).fixedSize()
-            .help(modeHelp)
-            .disabled(busy && !store.changesModeLive(conversation.id))
+            }
             .confirmationDialog("¿Activar el modo Bypass?", isPresented: $confirmingBypass, titleVisibility: .visible) {
                 Button("Activar Bypass", role: .destructive) {
                     store.updateMode(id: conversation.id, mode: ChatRunMode.bypass.id, supported: modes)

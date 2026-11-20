@@ -29,7 +29,7 @@ private struct GeneralSettings: View {
     @AppStorage("collapsedSpaces") private var collapsedSpaces = ""
     @AppStorage("delegationEnabled") private var delegationEnabled = true
     @AppStorage("imageGenerationEnabled") private var imageGenerationEnabled = true
-    @AppStorage("transcriptMonospaced") private var transcriptMonospaced = true
+    @AppStorage("transcriptMonospaced") private var transcriptMonospaced = false
     @AppStorage(InterfaceStyle.key) private var interfaceStyle = InterfaceStyle.basic
     @AppStorage(SimulatorSession.lightModeKey) private var simulatorLightMode = true
     @AppStorage(SimulatorSession.idleMinutesKey) private var simulatorIdleMinutes = 10

@@ -12,7 +12,7 @@ struct StartView: View {
     var presetModel: String? = nil
 
     @AppStorage("lastNewAgentProvider") private var providerValue = ChatProvider.codex.rawValue
-    @AppStorage("transcriptMonospaced") private var monospaced = true
+    @AppStorage("transcriptMonospaced") private var monospaced = false
     @Environment(\.interfaceStyle) private var interfaceStyle
     @State private var model = ""
     @State private var effort = "high"
@@ -121,15 +121,10 @@ struct StartView: View {
                 NewAgentProviderButton(provider: providerBinding, localModels: store.localModels)
                 modelPicker
                 if !efforts.isEmpty {
-                    Menu {
-                        ForEach(efforts, id: \.self) { option in
-                            Button { effort = option } label: {
-                                if effort == option { Label(ChatModelChoice.effortTitle(option), systemImage: "checkmark") }
-                                else { Text(ChatModelChoice.effortTitle(option)) }
-                            }
-                        }
-                    } label: { Text(ChatModelChoice.effortTitle(effort)) }
-                    .menuStyle(.borderlessButton).fixedSize().help("Esfuerzo de razonamiento")
+                    EffortPopupButton(stops: efforts.map { EffortSlider.Stop(id: $0, title: ChatModelChoice.effortTitle($0)) },
+                                      selected: efforts.firstIndex(of: effort) ?? 0, disabled: false, footer: "Se usa al empezar el agente") { stop in
+                        if let id = stop.id { effort = id }
+                    }
                 }
                 if !(remoteEnabled && provider == .claude) { folderMenu }
                 Spacer(minLength: 8)

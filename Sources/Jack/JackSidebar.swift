@@ -24,6 +24,13 @@ struct SidebarRowModel: Identifiable, Equatable {
     /// Shown when the row is listed away from its parent in another space.
     var parentTitle: String? = nil
     var depth = 0
+    /// A plain permission request waiting for the user, answerable from the sidebar.
+    var approval: SidebarApproval? = nil
+}
+
+struct SidebarApproval: Equatable {
+    let id: String
+    let title: String
 }
 
 enum SidebarProjectSort: String, CaseIterable, Identifiable, Hashable {
@@ -190,6 +197,8 @@ struct JackSidebar: View {
     var claudeCloudActive = false
     var onShowClaudeChat: (() -> Void)? = nil
     var claudeChatActive = false
+    /// Answers a permission request from the "Necesita atención" section: conversation, approval id, allow.
+    var onRespond: ((UUID, String, Bool) -> Void)? = nil
     @State private var query = ""
     @FocusState private var searchFocused: Bool
     /// Folded spaces, stored as newline-separated project paths.
@@ -443,6 +452,11 @@ struct JackSidebar: View {
         let sections = sections(for: filtered)
         return ScrollView {
             LazyVStack(alignment: .leading, spacing: 1) {
+                let attention = onRespond == nil ? [] : filtered.filter { $0.approval != nil }
+                if !attention.isEmpty {
+                    sectionLabel("Necesita atención", count: attention.count, tint: JackPalette.amber)
+                    ForEach(attention) { row in attentionRow(row, now: now) }
+                }
                 if !sections.pinned.isEmpty {
                     sectionLabel("Fijados", count: sections.pinned.count)
                     ForEach(sections.pinned) { row in rowView(row, showProject: true, now: now) }
@@ -534,6 +548,27 @@ struct JackSidebar: View {
         .menuStyle(.borderlessButton)
         .foregroundStyle(JackPalette.muted)
         .help("Organizar proyectos: \(projectSort.title)")
+    }
+
+    /// The row plus the question and its answer buttons, so a permission needs no trip to the chat.
+    private func attentionRow(_ row: SidebarRowModel, now: Date) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            rowView(row, showProject: true, now: now)
+            if let approval = row.approval {
+                Text(approval.title).font(.system(size: 11)).foregroundStyle(JackPalette.muted).lineLimit(2).padding(.leading, 38).padding(.trailing, 8)
+                HStack(spacing: 6) {
+                    Button("Denegar") { onRespond?(row.id, approval.id, false) }
+                        .buttonStyle(.plain).font(.system(size: 11)).padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(JackPalette.panelStrong, in: Capsule())
+                    Button("Permitir") { onRespond?(row.id, approval.id, true) }
+                        .buttonStyle(.plain).font(.system(size: 11, weight: .medium)).foregroundStyle(.white).padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(JackPalette.accent, in: Capsule())
+                }
+                .padding(.leading, 38).padding(.bottom, 4)
+            }
+        }
+        .padding(.vertical, 2)
+        .background(JackPalette.amber.opacity(0.07), in: RoundedRectangle(cornerRadius: JackPalette.radius(6), style: .continuous))
     }
 
     private func rowView(_ row: SidebarRowModel, showProject: Bool, now: Date) -> some View {
