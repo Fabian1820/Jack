@@ -66,18 +66,6 @@ public sealed partial class MainWindow : Window
         {
             if (e.Key == VirtualKey.Escape && NewAgentSheet.Visibility == Visibility.Visible) { e.Handled = true; CloseNewAgentSheet(); }
         };
-        SheetFolder.KeyDown += (_, e) =>
-        {
-            if (e.Key == VirtualKey.Enter && SheetCreate.IsEnabled) { e.Handled = true; SheetCreate_Click(this, new RoutedEventArgs()); }
-        };
-        Root.KeyDown += (_, e) =>
-        {
-            if (e.Key == VirtualKey.Escape && NewAgentSheet.Visibility == Visibility.Visible) { e.Handled = true; CloseNewAgentSheet(); }
-        };
-        SheetFolder.KeyDown += (_, e) =>
-        {
-            if (e.Key == VirtualKey.Enter && SheetCreate.IsEnabled) { e.Handled = true; SheetCreate_Click(this, new RoutedEventArgs()); }
-        };
         Root.KeyDown += (_, e) =>
         {
             if (e.Key == VirtualKey.Escape && NewAgentSheet.Visibility == Visibility.Visible) { e.Handled = true; CloseNewAgentSheet(); }

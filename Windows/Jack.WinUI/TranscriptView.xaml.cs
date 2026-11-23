@@ -1,13 +1,13 @@
-using Jack.Core;
+﻿using Jack.Core;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Jack.WinUI;
 
-// Transcripción de la conversación seleccionada. Cada mensaje se construye una vez y se reutiliza mientras no cambie
-// (así un fragmento nuevo de respuesta no reconstruye todo el historial). Se desplaza al final solo si el usuario
-// ya estaba abajo o si acaba de cambiar de conversación.
+// TranscripciÃ³n de la conversaciÃ³n seleccionada. Cada mensaje se construye una vez y se reutiliza mientras no cambie
+// (asÃ­ un fragmento nuevo de respuesta no reconstruye todo el historial). Se desplaza al final solo si el usuario
+// ya estaba abajo o si acaba de cambiar de conversaciÃ³n.
 public sealed partial class TranscriptView : UserControl
 {
     private const double BottomTolerance = 60;
@@ -20,15 +20,13 @@ public sealed partial class TranscriptView : UserControl
     {
         InitializeComponent();
         ChatPresentation.FitColumn(Scroller, ContentColumn, 780);
-        ChatPresentation.FitColumn(Scroller, ContentColumn, 780);
-        ChatPresentation.FitColumn(Scroller, ContentColumn, 780);
     }
 
-    /// <summary>Muestra los mensajes de una conversación. <paramref name="working"/> enciende el indicador "Trabajando…".</summary>
+    /// <summary>Muestra los mensajes de una conversaciÃ³n. <paramref name="working"/> enciende el indicador "Trabajandoâ€¦".</summary>
     public void Show(Guid? conversationId, IReadOnlyList<ChatMessage> messages, bool working)
     {
         var switched = conversationId != shownId;
-        // Se decide antes de tocar los hijos: después el contenido ya habrá crecido.
+        // Se decide antes de tocar los hijos: despuÃ©s el contenido ya habrÃ¡ crecido.
         var follow = switched || IsNearBottom();
         if (switched)
         {
@@ -60,3 +58,4 @@ public sealed partial class TranscriptView : UserControl
     private void ScrollToEnd() =>
         DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => Scroller.ChangeView(null, Scroller.ScrollableHeight, null, true));
 }
+
