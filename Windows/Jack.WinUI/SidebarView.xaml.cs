@@ -19,6 +19,9 @@ public sealed partial class SidebarView : UserControl
     /// <summary>El usuario pide un agente nuevo (botón o atajo).</summary>
     public event Action? NewAgentRequested;
 
+    /// <summary>El usuario pulsó una conversación (aunque ya estuviera seleccionada).</summary>
+    public event Action? ConversationChosen;
+
     public SidebarView()
     {
         InitializeComponent();
@@ -77,24 +80,18 @@ public sealed partial class SidebarView : UserControl
     private void AddGroup(string title, string key, List<ChatConversation> items, string glyph)
     {
         var open = !collapsed.Contains(key) || query.Length > 0;
-        var header = new Grid { ColumnSpacing = 8, Padding = new Thickness(8, 8, 8, 4), Background = Clear() };
+        var header = new Grid { ColumnSpacing = 10, Padding = new Thickness(10, 10, 10, 6), Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent) };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(16) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var icon = new FontIcon { Glyph = glyph, FontSize = 12, Foreground = Res("JackMutedBrush") };
-        Grid.SetColumn(icon, 0);
+        var icon = new FontIcon { Glyph = glyph, FontSize = 13, Foreground = Res("JackMutedBrush") };
         header.Children.Add(icon);
         var name = new TextBlock
         {
-            Text = title, FontSize = 12.5, FontWeight = FontWeights.Medium,
+            Text = title, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = Res("JackMutedBrush"),
             TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap
         };
         Grid.SetColumn(name, 1);
         header.Children.Add(name);
-        var count = new TextBlock { Text = open ? items.Count.ToString() : "▸ " + items.Count, FontSize = 11, Foreground = Res("JackFaintBrush") };
-        Grid.SetColumn(count, 2);
-        header.Children.Add(count);
-        ToolTipService.SetToolTip(header, key.StartsWith('\u0001') ? "Fijados" : key);
         header.Tapped += (_, _) =>
         {
             if (!collapsed.Remove(key)) collapsed.Add(key);
@@ -121,46 +118,57 @@ public sealed partial class SidebarView : UserControl
         var (statusLabel, statusColor) = ChatPresentation.StatusOf(store!, conversation.Id);
         var unread = conversation.HasUnread == true;
         var selected = store!.SelectedId == conversation.Id;
+        var working = statusLabel == "Ocupado";
 
-        var grid = new Grid { ColumnSpacing = 8, Padding = new Thickness(8, 6, 8, 6) };
+        var grid = new Grid { ColumnSpacing = 10, Padding = new Thickness(10, 8, 10, 8) };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(16) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        if (statusLabel == "Inactivo")
+        FrameworkElement indicator;
+        if (working)
         {
-            var glyph = new FontIcon { Glyph = "\uE8BD", FontSize = 11, Foreground = Res("JackFaintBrush") };
-            Grid.SetColumn(glyph, 0);
-            grid.Children.Add(glyph);
+            indicator = new ProgressRing { Width = 16, Height = 16, IsActive = true, Foreground = Res("JackAccentBrush") };
         }
         else
         {
-            var dot = new Ellipse { Width = 8, Height = 8, Fill = new SolidColorBrush(statusColor), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-            ToolTipService.SetToolTip(dot, statusLabel);
-            Grid.SetColumn(dot, 0);
-            grid.Children.Add(dot);
+            var color = statusLabel == "Inactivo" ? Windows.UI.Color.FromArgb(255, 0x6B, 0x72, 0x80) : statusColor;
+            indicator = new Ellipse { Width = 8, Height = 8, Fill = new SolidColorBrush(color) };
+            ToolTipService.SetToolTip(indicator, statusLabel);
         }
+        indicator.HorizontalAlignment = HorizontalAlignment.Center;
+        indicator.VerticalAlignment = VerticalAlignment.Center;
+        grid.Children.Add(indicator);
 
-        var title = new TextBlock
+        var model = string.IsNullOrWhiteSpace(conversation.Model) ? conversation.Provider.Title() : ChatPresentation.ModelTitle(conversation.Model);
+        var text = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center };
+        text.Children.Add(new TextBlock
         {
             Text = string.IsNullOrWhiteSpace(conversation.Title) ? "Nuevo agente" : conversation.Title,
-            FontSize = 12.5, TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis,
-            FontWeight = unread ? FontWeights.SemiBold : FontWeights.Normal, VerticalAlignment = VerticalAlignment.Center
-        };
-        Grid.SetColumn(title, 1);
-        grid.Children.Add(title);
+            FontSize = 14, TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis,
+            FontWeight = unread ? FontWeights.SemiBold : FontWeights.Normal
+        });
+        var subtitle = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        subtitle.Children.Add(new TextBlock { Text = model + " · " + Age(conversation.UpdatedAt), FontSize = 12, Foreground = Res("JackMutedBrush"), TextTrimming = TextTrimming.CharacterEllipsis });
+        if (unread) subtitle.Children.Add(new Ellipse { Width = 6, Height = 6, Fill = Res("JackAccentBrush"), VerticalAlignment = VerticalAlignment.Center });
+        text.Children.Add(subtitle);
+        Grid.SetColumn(text, 1);
+        grid.Children.Add(text);
 
-        var tail = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
-        if (unread) tail.Children.Add(new Ellipse { Width = 6, Height = 6, Fill = Res("AccentFillColorDefaultBrush") });
-        tail.Children.Add(new TextBlock { Text = Age(conversation.UpdatedAt), FontSize = 10.5, Foreground = Res("JackFaintBrush") });
-        Grid.SetColumn(tail, 2);
-        grid.Children.Add(tail);
+        var layers = new Grid { Children = { grid } };
+        if (selected)
+        {
+            layers.Children.Add(new Border
+            {
+                Width = 3, Height = 24, CornerRadius = new CornerRadius(2), Background = Res("JackAccentBrush"),
+                HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center
+            });
+        }
 
         var row = new Border
         {
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Background = selected ? Res("JackSelectionBrush") : Clear(),
-            Child = grid,
+            Child = layers,
             ContextFlyout = BuildMenu(conversation)
         };
         ToolTipService.SetToolTip(row, $"{conversation.Provider.Title()} · {conversation.ProjectPath}");
@@ -170,7 +178,11 @@ public sealed partial class SidebarView : UserControl
             row.PointerExited += (_, _) => row.Background = Clear();
         }
         var id = conversation.Id;
-        row.Tapped += (_, _) => { if (store!.SelectedId != id) store.Select(id); };
+        row.Tapped += (_, _) =>
+        {
+            if (store!.SelectedId != id) store.Select(id);
+            ConversationChosen?.Invoke();
+        };
         return row;
     }
 

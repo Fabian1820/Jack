@@ -1,13 +1,13 @@
-﻿using Jack.Core;
+using Jack.Core;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Jack.WinUI;
 
-// TranscripciÃ³n de la conversaciÃ³n seleccionada. Cada mensaje se construye una vez y se reutiliza mientras no cambie
-// (asÃ­ un fragmento nuevo de respuesta no reconstruye todo el historial). Se desplaza al final solo si el usuario
-// ya estaba abajo o si acaba de cambiar de conversaciÃ³n.
+// Transcripción de la conversación seleccionada. Cada mensaje se construye una vez y se reutiliza mientras no cambie
+// (así un fragmento nuevo de respuesta no reconstruye todo el historial). Se desplaza al final solo si el usuario
+// ya estaba abajo o si acaba de cambiar de conversación.
 public sealed partial class TranscriptView : UserControl
 {
     private const double BottomTolerance = 60;
@@ -22,11 +22,11 @@ public sealed partial class TranscriptView : UserControl
         ChatPresentation.FitColumn(Scroller, ContentColumn, 780);
     }
 
-    /// <summary>Muestra los mensajes de una conversaciÃ³n. <paramref name="working"/> enciende el indicador "Trabajandoâ€¦".</summary>
+    /// <summary>Muestra los mensajes de una conversación. <paramref name="working"/> enciende el indicador "Trabajando…".</summary>
     public void Show(Guid? conversationId, IReadOnlyList<ChatMessage> messages, bool working)
     {
         var switched = conversationId != shownId;
-        // Se decide antes de tocar los hijos: despuÃ©s el contenido ya habrÃ¡ crecido.
+        // Se decide antes de tocar los hijos: después el contenido ya habrá crecido.
         var follow = switched || IsNearBottom();
         if (switched)
         {
@@ -36,14 +36,25 @@ public sealed partial class TranscriptView : UserControl
 
         var next = new Dictionary<string, (int Signature, FrameworkElement Element)>();
         MessagesHost.Children.Clear();
-        foreach (var message in messages)
+        for (var i = 0; i < messages.Count; i++)
         {
-            var signature = HashCode.Combine(message.Role, message.Text, message.Detail, message.Status, message.Attachments?.Count ?? 0);
-            if (!cache.TryGetValue(message.Id, out var entry) || entry.Signature != signature)
+            var message = messages[i];
+            var group = new List<ChatMessage> { message };
+            if (message.Role == "tool")
             {
-                entry = (signature, MessageView.Build(message));
+                while (i + 1 < messages.Count && messages[i + 1].Role == "tool") group.Add(messages[++i]);
             }
-            next[message.Id] = entry;
+            var signature = 0;
+            foreach (var m in group)
+            {
+                signature = HashCode.Combine(signature, m.Role, m.Text, m.Detail, m.Status, m.Attachments?.Count ?? 0);
+            }
+            var key = message.Id + (group.Count > 1 ? "+" : "");
+            if (!cache.TryGetValue(key, out var entry) || entry.Signature != signature)
+            {
+                entry = (signature, message.Role == "tool" ? MessageView.ToolGroup(group) : MessageView.Build(message));
+            }
+            next[key] = entry;
             MessagesHost.Children.Add(entry.Element);
         }
         cache = next;

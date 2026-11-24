@@ -16,8 +16,14 @@ public static class ChatPresentation
 
     private static bool dialogOpen;
 
+    /// <summary>Carpeta personal: el espacio "Sin carpeta", como en macOS.</summary>
+    public static readonly string HomeFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+    public static bool IsHome(string projectPath) =>
+        string.Equals(projectPath.TrimEnd('\\', '/'), HomeFolder.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase);
+
     public static string ProjectName(string projectPath) =>
-        Path.GetFileName(projectPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) is { Length: > 0 } name
+        IsHome(projectPath) ? "Sin carpeta" : Path.GetFileName(projectPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) is { Length: > 0 } name
             ? name
             : projectPath;
 

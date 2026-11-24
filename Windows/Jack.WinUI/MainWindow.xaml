@@ -17,170 +17,181 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Fondos: barra lateral (chrome) y lienzo del chat, a pantalla completa. -->
-        <Border Grid.RowSpan="2" Background="{ThemeResource JackChromeBrush}" />
-        <Border Grid.RowSpan="2" Grid.Column="1" Background="{ThemeResource JackCanvasBrush}"
-                BorderThickness="1,0,0,0" BorderBrush="{ThemeResource JackHairlineBrush}" />
-
-        <!-- Barra de título arrastrable: marca a la izquierda, nombre del agente a la derecha. -->
+        <!-- Barra de título arrastrable: logo + nombre. -->
         <Grid x:Name="AppTitleBar" Grid.ColumnSpan="2" Background="Transparent">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="272" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="140" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" Spacing="8" Padding="16,0,0,0" VerticalAlignment="Center">
-                <Image Source="Assets/jack.png" Width="20" Height="20" />
-                <TextBlock Text="Jack" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel Grid.Column="1" Padding="20,0,0,0" VerticalAlignment="Center" Orientation="Horizontal" Spacing="10">
-                <TextBlock x:Name="ConversationTitle" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="420" />
-                <TextBlock x:Name="ConversationDescription" Style="{StaticResource JackCaption}" TextWrapping="NoWrap"
-                           TextTrimming="CharacterEllipsis" MaxWidth="460" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" Spacing="10" Padding="14,0,0,0" VerticalAlignment="Center">
+                <Image Source="Assets/jack.png" Width="18" Height="18" />
+                <TextBlock Text="Jack" FontSize="12" Foreground="{ThemeResource JackMutedBrush}" VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
 
         <ui:SidebarView x:Name="Sidebar" Grid.Row="1" />
 
-        <Grid Grid.Row="1" Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <InfoBar x:Name="ErrorBar" Grid.Row="0" Severity="Error" IsOpen="False" IsClosable="True"
-                     Margin="12,4,12,0" Closed="ErrorBar_Closed" />
-
-            <Grid x:Name="EmptyState" Grid.Row="1">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" MaxWidth="420" Margin="24">
-                    <FontIcon Glyph="&#xE8BD;" FontSize="30" Foreground="{ThemeResource JackFaintBrush}" Margin="0,0,0,6" />
-                    <TextBlock x:Name="EmptyTitle" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
-                               FontSize="16" FontWeight="SemiBold" />
-                    <TextBlock x:Name="EmptyBody" TextAlignment="Center" Style="{StaticResource JackSecondaryText}" />
-                    <Button x:Name="EmptyNewAgentButton" Click="NewAgent_Click" HorizontalAlignment="Center" Margin="0,10,0,0"
-                            Style="{ThemeResource AccentButtonStyle}" Padding="18,7" Content="Nuevo agente" />
-                </StackPanel>
-            </Grid>
-
-            <Grid x:Name="ConversationView" Grid.Row="1" Visibility="Collapsed">
+        <!-- Panel principal: cabecera, avisos y contenido. -->
+        <Border Grid.Row="1" Grid.Column="1" Margin="0,0,8,8" CornerRadius="8" BorderThickness="1"
+                Background="{ThemeResource JackSurfaceBrush}" BorderBrush="{ThemeResource JackHairlineBrush}">
+            <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <ui:TranscriptView x:Name="Transcript" Grid.Row="0" />
-
-                <Grid x:Name="ApprovalsHost" Grid.Row="1" Padding="24,8,24,0" Visibility="Collapsed">
-                    <StackPanel x:Name="ApprovalsBox" HorizontalAlignment="Center" Spacing="8" />
+                <Grid x:Name="HeaderBar" Grid.Row="0" Height="60" Padding="20,0,16,0" BorderThickness="0,0,0,1"
+                      BorderBrush="{ThemeResource JackHairlineBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock x:Name="ConversationTitle" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock x:Name="ConversationDescription" FontSize="12" Foreground="{ThemeResource JackMutedBrush}"
+                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" MaxWidth="560" />
+                            <TextBlock x:Name="ConversationState" FontSize="12" Foreground="{ThemeResource JackAccentBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Button x:Name="StopButton" Grid.Column="1" Content="Detener" Click="Stop_Click" Visibility="Collapsed"
+                            VerticalAlignment="Center" Padding="16,6" CornerRadius="8" Background="Transparent"
+                            BorderBrush="{ThemeResource JackStrongLineBrush}" />
                 </Grid>
 
-                <Grid x:Name="ComposerHost" Grid.Row="2" Padding="24,8,24,18">
-                    <StackPanel x:Name="ComposerBox" HorizontalAlignment="Center" Spacing="8">
-                        <StackPanel x:Name="QueueHost" Orientation="Horizontal" Spacing="6" Visibility="Collapsed" />
-                        <Border CornerRadius="12" BorderThickness="1" Padding="12,10,10,8"
-                                Background="{ThemeResource JackPanelBrush}" BorderBrush="{ThemeResource JackHairlineBrush}">
-                            <StackPanel Spacing="6">
-                                <StackPanel x:Name="AttachmentsHost" Orientation="Horizontal" Spacing="6" Visibility="Collapsed" />
-                                <TextBox x:Name="Composer" AcceptsReturn="True" TextWrapping="Wrap"
-                                         MinHeight="40" MaxHeight="200" FontSize="14"
-                                         Background="Transparent" BorderThickness="0" Padding="0,6"
-                                         PlaceholderText="Escribe un mensaje…  (Intro envía, Mayús+Intro nueva línea)"
-                                         AutomationProperties.Name="Mensaje"
-                                         PreviewKeyDown="Composer_KeyDown" TextChanged="Composer_TextChanged">
-                                    <TextBox.Resources>
-                                        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent" />
-                                        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent" />
-                                        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
-                                        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
-                                        <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
-                                    </TextBox.Resources>
-                                </TextBox>
-                                <Grid ColumnSpacing="4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.Resources>
-                                        <SolidColorBrush x:Key="ComboBoxBackground" Color="Transparent" />
-                                        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{ThemeResource ControlFillColorSecondary}" />
-                                        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{ThemeResource ControlFillColorTertiary}" />
-                                        <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="Transparent" />
-                                        <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="Transparent" />
-                                        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="Transparent" />
-                                        <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="Transparent" />
-                                        <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="Transparent" />
-                                        <Style TargetType="ComboBox">
-                                            <Setter Property="FontSize" Value="12" />
-                                            <Setter Property="MinHeight" Value="28" />
-                                            <Setter Property="Padding" Value="8,3,0,3" />
-                                        </Style>
-                                    </Grid.Resources>
-                                    <Button x:Name="AttachButton" Click="Attach_Click" Width="30" Height="30" Padding="0"
-                                            Background="Transparent" BorderThickness="0" CornerRadius="15"
-                                            ToolTipService.ToolTip="Adjuntar archivos" AutomationProperties.Name="Adjuntar archivos">
-                                        <FontIcon Glyph="&#xE723;" FontSize="14" />
-                                    </Button>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="0">
-                                        <ComboBox x:Name="ModelBox" MinWidth="120" AutomationProperties.Name="Modelo"
-                                                  ToolTipService.ToolTip="Modelo" SelectionChanged="ModelBox_SelectionChanged" />
-                                        <ComboBox x:Name="EffortBox" MinWidth="90" AutomationProperties.Name="Esfuerzo"
-                                                  ToolTipService.ToolTip="Esfuerzo" SelectionChanged="EffortBox_SelectionChanged" />
-                                        <ComboBox x:Name="ModeBox" MinWidth="120" AutomationProperties.Name="Modo de permisos"
-                                                  ToolTipService.ToolTip="Modo de permisos" SelectionChanged="ModeBox_SelectionChanged" />
-                                    </StackPanel>
-                                    <Button x:Name="SendButton" Grid.Column="2" Click="Send_Click" Width="30" Height="30" Padding="0"
-                                            CornerRadius="15" Style="{ThemeResource AccentButtonStyle}"
-                                            ToolTipService.ToolTip="Enviar" AutomationProperties.Name="Enviar">
-                                        <FontIcon x:Name="SendGlyph" Glyph="&#xE74A;" FontSize="13" />
-                                    </Button>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                <InfoBar x:Name="ErrorBar" Grid.Row="1" Severity="Error" IsOpen="False" IsClosable="True"
+                         Margin="12,6,12,0" Closed="ErrorBar_Closed" />
+
+                <Grid x:Name="EmptyState" Grid.Row="2">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" MaxWidth="420" Margin="24">
+                        <Image Source="Assets/jack.png" Width="48" Height="48" Margin="0,0,0,6" />
+                        <TextBlock x:Name="EmptyTitle" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                                   FontSize="16" FontWeight="SemiBold" />
+                        <TextBlock x:Name="EmptyBody" TextAlignment="Center" Style="{StaticResource JackSecondaryText}" />
+                        <Button x:Name="EmptyNewAgentButton" Click="NewAgent_Click" HorizontalAlignment="Center" Margin="0,10,0,0"
+                                Style="{ThemeResource AccentButtonStyle}" Padding="18,8" CornerRadius="8" Content="Nuevo agente" />
                     </StackPanel>
+                </Grid>
+
+                <Grid x:Name="ConversationView" Grid.Row="2" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ui:TranscriptView x:Name="Transcript" Grid.Row="0" />
+
+                    <!-- Pantalla de agente nuevo: elegir carpeta y escribir el primer mensaje, en el propio chat. -->
+                    <ScrollViewer x:Name="NewChatPanel" Grid.Row="0" Visibility="Collapsed" VerticalScrollBarVisibility="Auto"
+                                  Background="{ThemeResource JackSurfaceBrush}">
+                        <StackPanel x:Name="NewChatBox" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" Padding="0,24">
+                            <Image Source="Assets/jack.png" Width="52" Height="52" HorizontalAlignment="Center" />
+                            <TextBlock Text="¿En qué carpeta trabajamos?" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                            <TextBlock Text="Elige el proyecto y escribe tu primer mensaje abajo." Style="{StaticResource JackSecondaryText}"
+                                       HorizontalAlignment="Center" TextAlignment="Center" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border CornerRadius="8" BorderThickness="1" Padding="12,0" MinHeight="40"
+                                        Background="{ThemeResource JackPanelBrush}" BorderBrush="{ThemeResource JackStrongLineBrush}">
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource JackMutedBrush}" VerticalAlignment="Center" />
+                                        <TextBox x:Name="NewFolder" Grid.Column="1" PlaceholderText="Ruta de la carpeta del proyecto"
+                                                 Background="Transparent" BorderThickness="0" VerticalAlignment="Center" FontSize="14"
+                                                 TextChanged="NewFolder_TextChanged" AutomationProperties.Name="Carpeta del proyecto">
+                                            <TextBox.Resources>
+                                                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent" />
+                                                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent" />
+                                                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+                                                <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
+                                            </TextBox.Resources>
+                                        </TextBox>
+                                    </Grid>
+                                </Border>
+                                <Button Grid.Column="1" Content="Examinar…" Click="NewBrowse_Click" Height="40" Padding="16,0" CornerRadius="8" />
+                            </Grid>
+                            <TextBlock x:Name="NewHint" FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Visibility="Collapsed" />
+                            <StackPanel x:Name="NewRecentBox" Spacing="2">
+                                <TextBlock Text="Recientes" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource JackMutedBrush}" Margin="4,6,0,2" />
+                                <StackPanel x:Name="NewRecent" Spacing="1" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Grid x:Name="ApprovalsHost" Grid.Row="1" Padding="24,8,24,0" Visibility="Collapsed">
+                        <StackPanel x:Name="ApprovalsBox" HorizontalAlignment="Center" Spacing="8" />
+                    </Grid>
+
+                    <Grid x:Name="ComposerHost" Grid.Row="2" Padding="24,8,24,10">
+                        <StackPanel x:Name="ComposerBox" HorizontalAlignment="Center" Spacing="6">
+                            <StackPanel x:Name="QueueHost" Orientation="Horizontal" Spacing="6" Visibility="Collapsed" />
+                            <!-- Borde inferior de 2 px de acento: el Border exterior es el acento; el interior, la caja. -->
+                            <Border CornerRadius="12" Background="{ThemeResource JackAccentBrush}" Padding="0,0,0,2">
+                                <Border CornerRadius="12,12,10,10" BorderThickness="1" Padding="14,10,10,8"
+                                        Background="{ThemeResource JackComposerBrush}" BorderBrush="{ThemeResource JackStrongLineBrush}">
+                                    <StackPanel Spacing="6">
+                                        <StackPanel x:Name="AttachmentsHost" Orientation="Horizontal" Spacing="6" Visibility="Collapsed" />
+                                        <TextBox x:Name="Composer" AcceptsReturn="True" TextWrapping="Wrap"
+                                                 MinHeight="48" MaxHeight="200" FontSize="14"
+                                                 Background="Transparent" BorderThickness="0" Padding="0,6"
+                                                 PlaceholderText="Escribe un mensaje…"
+                                                 AutomationProperties.Name="Mensaje"
+                                                 PreviewKeyDown="Composer_KeyDown" TextChanged="Composer_TextChanged">
+                                            <TextBox.Resources>
+                                                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent" />
+                                                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent" />
+                                                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+                                                <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
+                                                <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
+                                            </TextBox.Resources>
+                                        </TextBox>
+                                        <Grid ColumnSpacing="6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.Resources>
+                                                <Style TargetType="ComboBox">
+                                                    <Setter Property="FontSize" Value="13" />
+                                                    <Setter Property="MinHeight" Value="32" />
+                                                    <Setter Property="CornerRadius" Value="16" />
+                                                    <Setter Property="BorderThickness" Value="1" />
+                                                    <Setter Property="Padding" Value="14,0,0,0" />
+                                                </Style>
+                                            </Grid.Resources>
+                                            <Button x:Name="AttachButton" Click="Attach_Click" Width="36" Height="36" Padding="0"
+                                                    Background="Transparent" BorderThickness="0" CornerRadius="18"
+                                                    ToolTipService.ToolTip="Adjuntar archivos" AutomationProperties.Name="Adjuntar archivos">
+                                                <FontIcon Glyph="&#xE723;" FontSize="15" Foreground="{ThemeResource JackMutedBrush}" />
+                                            </Button>
+                                            <StackPanel x:Name="SettingsRow" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                <ComboBox x:Name="ModelBox" MinWidth="120" AutomationProperties.Name="Modelo"
+                                                          ToolTipService.ToolTip="Modelo" SelectionChanged="ModelBox_SelectionChanged" />
+                                                <ComboBox x:Name="EffortBox" MinWidth="100" AutomationProperties.Name="Esfuerzo"
+                                                          ToolTipService.ToolTip="Esfuerzo" SelectionChanged="EffortBox_SelectionChanged" />
+                                                <ComboBox x:Name="ModeBox" MinWidth="120" AutomationProperties.Name="Modo de permisos"
+                                                          ToolTipService.ToolTip="Modo de permisos" SelectionChanged="ModeBox_SelectionChanged" />
+                                            </StackPanel>
+                                            <Button x:Name="SendButton" Grid.Column="2" Click="Send_Click" Width="36" Height="36" Padding="0"
+                                                    CornerRadius="18" Style="{ThemeResource AccentButtonStyle}"
+                                                    ToolTipService.ToolTip="Enviar" AutomationProperties.Name="Enviar">
+                                                <FontIcon x:Name="SendGlyph" Glyph="&#xE74A;" FontSize="14" />
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </Border>
+                            <TextBlock Text="Intro envía · Mayús+Intro nueva línea" FontSize="11" HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource JackMutedBrush}" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Grid>
-        </Grid>
-
-        <!-- Hoja "Nuevo agente": sustituye al ContentDialog y al selector de carpetas de WinRT (que falla elevado). -->
-        <Grid x:Name="NewAgentSheet" Grid.RowSpan="2" Grid.ColumnSpan="2" Visibility="Collapsed"
-              Background="{ThemeResource JackScrimBrush}" Tapped="SheetScrim_Tapped">
-            <Border Width="480" MaxWidth="560" VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="12"
-                    BorderThickness="1" Padding="22" Tapped="SheetCard_Tapped"
-                    Background="{ThemeResource JackChromeBrush}" BorderBrush="{ThemeResource JackHairlineBrush}">
-                <StackPanel Spacing="14">
-                    <TextBlock Text="Nuevo agente" FontSize="17" FontWeight="SemiBold" />
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Carpeta del proyecto" FontSize="12" Style="{StaticResource JackCaption}" />
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="SheetFolder" PlaceholderText="C:\ruta\al\proyecto" TextChanged="SheetFolder_TextChanged"
-                                     AutomationProperties.Name="Carpeta del proyecto" />
-                            <Button Grid.Column="1" Content="Examinar…" Click="SheetBrowse_Click" />
-                        </Grid>
-                        <TextBlock x:Name="SheetHint" FontSize="11.5" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Visibility="Collapsed" />
-                    </StackPanel>
-                    <StackPanel x:Name="SheetRecentBox" Spacing="4">
-                        <TextBlock Text="Recientes" FontSize="12" Style="{StaticResource JackCaption}" />
-                        <StackPanel x:Name="SheetRecent" Spacing="1" />
-                    </StackPanel>
-                    <TextBox x:Name="SheetName" Header="Nombre (opcional)" MaxLength="120" PlaceholderText="Por defecto, el que genera el agente" />
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="Proveedor" FontSize="12" Style="{StaticResource JackCaption}" />
-                        <RadioButton Content="Claude Code" IsChecked="True" GroupName="Prov" />
-                        <TextBlock Text="Codex, OpenCode y otros llegarán más adelante a Windows." FontSize="11.5" Style="{StaticResource JackCaption}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,4,0,0">
-                        <Button Content="Cancelar" Click="SheetCancel_Click" Padding="16,6" />
-                        <Button x:Name="SheetCreate" Content="Crear agente" Click="SheetCreate_Click" IsEnabled="False"
-                                Style="{ThemeResource AccentButtonStyle}" Padding="16,6" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Grid>
+        </Border>
     </Grid>
 </Window>

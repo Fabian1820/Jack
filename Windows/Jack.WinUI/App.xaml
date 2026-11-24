@@ -10,34 +10,80 @@
 
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
-                    <SolidColorBrush x:Key="JackCanvasBrush" Color="#0E0E0F" />
-                    <SolidColorBrush x:Key="JackChromeBrush" Color="#161618" />
-                    <SolidColorBrush x:Key="JackSelectionBrush" Color="#16FFFFFF" />
+                    <SolidColorBrush x:Key="JackCanvasBrush" Color="#14161B" />
+                    <SolidColorBrush x:Key="JackChromeBrush" Color="#14161B" />
+                    <SolidColorBrush x:Key="JackSurfaceBrush" Color="#1E2128" />
+                    <SolidColorBrush x:Key="JackCardBrush" Color="#23262E" />
+                    <SolidColorBrush x:Key="JackComposerBrush" Color="#262A33" />
+                    <SolidColorBrush x:Key="JackAccentBrush" Color="#4CC2FF" />
+                    <SolidColorBrush x:Key="JackAccentInkBrush" Color="#06131C" />
+                    <SolidColorBrush x:Key="JackSuccessBrush" Color="#6CCB8A" />
+                    <SolidColorBrush x:Key="JackSelectionBrush" Color="#14FFFFFF" />
                     <SolidColorBrush x:Key="JackHoverBrush" Color="#0DFFFFFF" />
                     <SolidColorBrush x:Key="JackPanelBrush" Color="#0DFFFFFF" />
-                    <SolidColorBrush x:Key="JackPanelStrongBrush" Color="#14FFFFFF" />
-                    <SolidColorBrush x:Key="JackHairlineBrush" Color="#16FFFFFF" />
-                    <SolidColorBrush x:Key="JackMutedBrush" Color="#9A9AA0" />
+                    <SolidColorBrush x:Key="JackPanelStrongBrush" Color="#17FFFFFF" />
+                    <SolidColorBrush x:Key="JackHairlineBrush" Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="JackStrongLineBrush" Color="#1FFFFFFF" />
+                    <SolidColorBrush x:Key="JackMutedBrush" Color="#A3A9B5" />
                     <SolidColorBrush x:Key="JackFaintBrush" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="JackScrimBrush" Color="#99000000" />
+                    <SolidColorBrush x:Key="AccentButtonBackground" Color="#4CC2FF" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#6FCFFF" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#3AA9E0" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#06131C" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#06131C" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#06131C" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#1FFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#33FFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#33FFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="#14FFFFFF" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="JackCanvasBrush" Color="#FFFFFF" />
-                    <SolidColorBrush x:Key="JackChromeBrush" Color="#F3F3F5" />
-                    <SolidColorBrush x:Key="JackSelectionBrush" Color="#13000000" />
+                    <SolidColorBrush x:Key="JackCanvasBrush" Color="#F3F4F7" />
+                    <SolidColorBrush x:Key="JackChromeBrush" Color="#F3F4F7" />
+                    <SolidColorBrush x:Key="JackSurfaceBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="JackCardBrush" Color="#F3F4F7" />
+                    <SolidColorBrush x:Key="JackComposerBrush" Color="#F7F8FA" />
+                    <SolidColorBrush x:Key="JackAccentBrush" Color="#0A84C6" />
+                    <SolidColorBrush x:Key="JackAccentInkBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="JackSuccessBrush" Color="#1E8E4A" />
+                    <SolidColorBrush x:Key="JackSelectionBrush" Color="#14000000" />
                     <SolidColorBrush x:Key="JackHoverBrush" Color="#0A000000" />
                     <SolidColorBrush x:Key="JackPanelBrush" Color="#0A000000" />
                     <SolidColorBrush x:Key="JackPanelStrongBrush" Color="#11000000" />
                     <SolidColorBrush x:Key="JackHairlineBrush" Color="#1A000000" />
-                    <SolidColorBrush x:Key="JackMutedBrush" Color="#6B6B72" />
+                    <SolidColorBrush x:Key="JackStrongLineBrush" Color="#26000000" />
+                    <SolidColorBrush x:Key="JackMutedBrush" Color="#5F6573" />
                     <SolidColorBrush x:Key="JackFaintBrush" Color="#80000000" />
                     <SolidColorBrush x:Key="JackScrimBrush" Color="#55000000" />
+                    <SolidColorBrush x:Key="AccentButtonBackground" Color="#0A84C6" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#0B93DC" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#08709F" />
+                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#0F000000" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#14000000" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#26000000" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#40000000" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#40000000" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="#0F000000" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
             <!-- Estilos reutilizables para la interfaz construida en código. Los pinceles van por ThemeResource
                  dentro de los estilos, así cambian con el tema claro/oscuro sin consultarlos desde C#. -->
-            <FontFamily x:Key="JackMonoFont">Cascadia Mono</FontFamily>
+            <FontFamily x:Key="JackMonoFont">Cascadia Code, Cascadia Mono, Consolas</FontFamily>
 
             <Style x:Key="JackSecondaryText" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{ThemeResource JackMutedBrush}" />
@@ -58,8 +104,8 @@
 
             <Style x:Key="JackBubble" TargetType="Border">
                 <Setter Property="Background" Value="{ThemeResource JackPanelStrongBrush}" />
-                <Setter Property="CornerRadius" Value="10" />
-                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="CornerRadius" Value="16,16,4,16" />
+                <Setter Property="Padding" Value="14,10" />
             </Style>
 
             <Style x:Key="JackPanel" TargetType="Border">
@@ -79,7 +125,7 @@
             </Style>
 
             <Style x:Key="JackQuote" TargetType="Border">
-                <Setter Property="BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource JackAccentBrush}" />
                 <Setter Property="BorderThickness" Value="3,0,0,0" />
                 <Setter Property="Padding" Value="12,2,0,2" />
             </Style>

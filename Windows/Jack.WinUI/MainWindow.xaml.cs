@@ -28,6 +28,8 @@ public sealed partial class MainWindow : Window
 
     private Guid? shownId;
     private Draft? draft;
+    private bool newMode;
+    private readonly Draft newDraft = new();
     private Guid? comboOwner;
     private string effortKey = "";
     private string approvalKey = "";
@@ -54,22 +56,16 @@ public sealed partial class MainWindow : Window
         store.Changed += ScheduleRefresh;
 
         Sidebar.Attach(store);
-        Sidebar.NewAgentRequested += OpenNewAgentDialog;
+        Sidebar.NewAgentRequested += EnterNewMode;
         ChatPresentation.FitColumn(ApprovalsHost, ApprovalsBox);
         ChatPresentation.FitColumn(ComposerHost, ComposerBox, 780);
         Closed += (_, _) => store.Shutdown();
-        SheetFolder.KeyDown += (_, e) =>
+        NewFolder.KeyDown += (_, e) =>
         {
-            if (e.Key == VirtualKey.Enter && SheetCreate.IsEnabled) { e.Handled = true; SheetCreate_Click(this, new RoutedEventArgs()); }
+            if (e.Key == VirtualKey.Enter) { e.Handled = true; Composer.Focus(FocusState.Programmatic); }
         };
-        Root.KeyDown += (_, e) =>
-        {
-            if (e.Key == VirtualKey.Escape && NewAgentSheet.Visibility == Visibility.Visible) { e.Handled = true; CloseNewAgentSheet(); }
-        };
-        Root.KeyDown += (_, e) =>
-        {
-            if (e.Key == VirtualKey.Escape && NewAgentSheet.Visibility == Visibility.Visible) { e.Handled = true; CloseNewAgentSheet(); }
-        };
+        ChatPresentation.FitColumn(NewChatPanel, NewChatBox, 560);
+        Sidebar.ConversationChosen += LeaveNewMode;
 
         Refresh();
     }
@@ -104,7 +100,7 @@ public sealed partial class MainWindow : Window
 
     private void NewAgentShortcut_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
-        OpenNewAgentDialog();
+        EnterNewMode();
         args.Handled = true;
     }
 
@@ -120,6 +116,11 @@ public sealed partial class MainWindow : Window
     {
         Sidebar.Refresh();
         ShowError();
+        if (newMode)
+        {
+            ShowNewMode();
+            return;
+        }
 
         var conversation = store.SelectedConversation;
         if (conversation is null)
@@ -132,6 +133,10 @@ public sealed partial class MainWindow : Window
 
         EmptyState.Visibility = Visibility.Collapsed;
         ConversationView.Visibility = Visibility.Visible;
+        HeaderBar.Visibility = Visibility.Visible;
+        NewChatPanel.Visibility = Visibility.Collapsed;
+        Transcript.Visibility = Visibility.Visible;
+        SettingsRow.Visibility = Visibility.Visible;
         if (conversation.Id != shownId) SwitchTo(conversation);
 
         var id = conversation.Id;
@@ -141,6 +146,8 @@ public sealed partial class MainWindow : Window
         var busy = store.IsBusy(id);
         var working = store.Statuses.TryGetValue(id, out var status) && (status == ChatStatus.Running || status == ChatStatus.Queued);
         Transcript.Show(id, conversation.Messages, working);
+        ConversationState.Text = working ? "· Trabajando…" : "";
+        StopButton.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
 
         ShowApprovals(id);
         ShowQueue(id);
@@ -156,8 +163,7 @@ public sealed partial class MainWindow : Window
         EmptyBody.Text = any
             ? "Elige una conversación en la barra lateral o crea una nueva."
             : "Elige la carpeta de un proyecto y un proveedor para preparar una conversación.";
-        ConversationTitle.Text = "";
-        ConversationDescription.Text = "";
+        HeaderBar.Visibility = Visibility.Collapsed;
         EmptyState.Visibility = Visibility.Visible;
         ConversationView.Visibility = Visibility.Collapsed;
     }
@@ -415,8 +421,18 @@ public sealed partial class MainWindow : Window
         SendCurrent();
     }
 
+    private void Stop_Click(object sender, RoutedEventArgs e)
+    {
+        if (shownId is { } id) store.Stop(id);
+    }
+
     private void Send_Click(object sender, RoutedEventArgs e)
     {
+        if (newMode)
+        {
+            SendNew();
+            return;
+        }
         if (shownId is not { } id || draft is null) return;
         var empty = Composer.Text.Trim().Length == 0 && draft.Files.Count == 0;
         // Ocupada y sin texto: el botón es "Detener". Con texto, se envía y el store lo pone en cola.
@@ -430,6 +446,11 @@ public sealed partial class MainWindow : Window
 
     private void SendCurrent()
     {
+        if (newMode)
+        {
+            SendNew();
+            return;
+        }
         if (shownId is not { } id || draft is null) return;
         var text = Composer.Text;
         if (text.Trim().Length == 0 && draft.Files.Count == 0) return;
@@ -462,95 +483,154 @@ public sealed partial class MainWindow : Window
 
     // ----------------------------------------------------------------------------------- Nuevo agente
 
-    private void NewAgent_Click(object sender, RoutedEventArgs e) => OpenNewAgentDialog();
+    private void NewAgent_Click(object sender, RoutedEventArgs e) => EnterNewMode();
 
-    private void OpenNewAgentDialog()
+    // Pantalla de agente nuevo, dentro del propio chat: carpeta arriba y compositor abajo.
+    private void EnterNewMode()
     {
-        SheetFolder.Text = "";
-        SheetName.Text = "";
-        SheetHint.Visibility = Visibility.Collapsed;
-        SheetCreate.IsEnabled = false;
+        if (!newMode)
+        {
+            if (shownId is { } previous && draft is not null) drafts[previous] = draft;
+            newMode = true;
+            shownId = null;
+            draft = newDraft;
+            Composer.Text = newDraft.Text;
+            RenderAttachments();
+            comboOwner = null;
+            effortKey = "";
+            approvalKey = "";
+            FillNewRecents();
+        }
+        Refresh();
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            if (NewFolder.Text.Trim().Length == 0) NewFolder.Focus(FocusState.Programmatic);
+            else Composer.Focus(FocusState.Programmatic);
+        });
+    }
 
-        // Proyectos usados antes, el más reciente primero, como atajo.
-        SheetRecent.Children.Clear();
+    private void LeaveNewMode()
+    {
+        if (!newMode) return;
+        newMode = false;
+        shownId = null;
+        draft = null;
+        Refresh();
+    }
+
+    private void ShowNewMode()
+    {
+        EmptyState.Visibility = Visibility.Collapsed;
+        ConversationView.Visibility = Visibility.Visible;
+        HeaderBar.Visibility = Visibility.Visible;
+        NewChatPanel.Visibility = Visibility.Visible;
+        Transcript.Visibility = Visibility.Collapsed;
+        ApprovalsHost.Visibility = Visibility.Collapsed;
+        QueueHost.Visibility = Visibility.Collapsed;
+        SettingsRow.Visibility = Visibility.Collapsed;
+        StopButton.Visibility = Visibility.Collapsed;
+        ConversationTitle.Text = "Nuevo agente";
+        ConversationDescription.Text = "Claude Code";
+        ConversationState.Text = "";
+        UpdateSendButton();
+    }
+
+    private void FillNewRecents()
+    {
+        NewRecent.Children.Clear();
+        NewRecent.Children.Add(RecentRow("\uE80F", "Sin carpeta", "Usa tu carpeta personal", ChatPresentation.HomeFolder));
         var recent = store.Conversations
             .OrderByDescending(c => c.UpdatedAt)
             .Select(c => c.ProjectPath)
-            .Where(path => Directory.Exists(path))
+            .Where(path => Directory.Exists(path) && !ChatPresentation.IsHome(path))
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(5)
+            .Take(6)
             .ToList();
-        foreach (var path in recent)
-        {
-            var row = new Button
-            {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
-                BorderThickness = new Thickness(0),
-                Padding = new Thickness(8, 5, 8, 5),
-                Content = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    Children =
-                    {
-                        new FontIcon { Glyph = "\uE8B7", FontSize = 12 },
-                        new TextBlock { Text = ChatPresentation.ProjectName(path), FontSize = 12.5 },
-                        new TextBlock { Text = path, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis,
-                                        Style = (Style)Application.Current.Resources["JackCaption"], MaxWidth = 280 }
-                    }
-                }
-            };
-            var chosen = path;
-            row.Click += (_, _) => SheetFolder.Text = chosen;
-            SheetRecent.Children.Add(row);
-        }
-        SheetRecentBox.Visibility = recent.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
-
-        NewAgentSheet.Visibility = Visibility.Visible;
-        SheetFolder.Focus(FocusState.Programmatic);
+        foreach (var path in recent) NewRecent.Children.Add(RecentRow("\uE8B7", ChatPresentation.ProjectName(path), path, path));
+        NewRecentBox.Visibility = Visibility.Visible;
     }
 
-    private void CloseNewAgentSheet() => NewAgentSheet.Visibility = Visibility.Collapsed;
-
-    private void SheetScrim_Tapped(object sender, TappedRoutedEventArgs e) => CloseNewAgentSheet();
-
-    private void SheetCard_Tapped(object sender, TappedRoutedEventArgs e) => e.Handled = true;
-
-    private void SheetCancel_Click(object sender, RoutedEventArgs e) => CloseNewAgentSheet();
-
-    private void SheetFolder_TextChanged(object sender, TextChangedEventArgs e)
+    private Button RecentRow(string glyph, string title, string subtitle, string path)
     {
-        var path = SheetFolder.Text.Trim().Trim('"');
-        var valid = path.Length > 0 && Directory.Exists(path);
-        SheetCreate.IsEnabled = valid;
-        SheetHint.Text = "La carpeta no existe.";
-        SheetHint.Visibility = path.Length > 0 && !valid ? Visibility.Visible : Visibility.Collapsed;
+        var row = new Button
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(10, 7, 10, 7),
+            CornerRadius = new CornerRadius(8),
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 10,
+                Children =
+                {
+                    new FontIcon { Glyph = glyph, FontSize = 13, Foreground = (Brush)Application.Current.Resources["JackMutedBrush"] },
+                    new TextBlock { Text = title, FontSize = 13.5 },
+                    new TextBlock { Text = subtitle, FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis,
+                                    Style = (Style)Application.Current.Resources["JackCaption"], MaxWidth = 300 }
+                }
+            }
+        };
+        row.Click += (_, _) =>
+        {
+            NewFolder.Text = path;
+            Composer.Focus(FocusState.Programmatic);
+        };
+        return row;
     }
 
-    private void SheetBrowse_Click(object sender, RoutedEventArgs e)
+    private void NewFolder_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var path = NewFolder.Text.Trim().Trim('"');
+        var missing = path.Length > 0 && !Directory.Exists(path);
+        NewHint.Text = "La carpeta no existe.";
+        NewHint.Visibility = missing ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void NewBrowse_Click(object sender, RoutedEventArgs e)
     {
         try
         {
             var folder = NativePicker.PickFolder(WinRT.Interop.WindowNative.GetWindowHandle(this), "Carpeta del proyecto");
-            if (folder is not null) SheetFolder.Text = folder;
+            if (folder is not null)
+            {
+                NewFolder.Text = folder;
+                Composer.Focus(FocusState.Programmatic);
+            }
         }
         catch (Exception error)
         {
-            SheetHint.Text = "No se pudo abrir el selector: " + error.Message + ". Escribe la ruta a mano.";
-            SheetHint.Visibility = Visibility.Visible;
+            NewHint.Text = "No se pudo abrir el selector: " + error.Message + ". Escribe la ruta a mano.";
+            NewHint.Visibility = Visibility.Visible;
         }
     }
 
-    private void SheetCreate_Click(object sender, RoutedEventArgs e)
+    // Crea el agente en la carpeta elegida y le envía el primer mensaje.
+    private void SendNew()
     {
-        var path = SheetFolder.Text.Trim().Trim('"');
-        if (!Directory.Exists(path)) return;
-        var name = string.IsNullOrWhiteSpace(SheetName.Text) ? null : SheetName.Text.Trim();
-        CloseNewAgentSheet();
-        // Create selecciona la conversación nueva; si algo falla, el store deja el aviso en ErrorMessage.
-        store.Create(path, ChatProvider.Claude, title: name);
+        var path = NewFolder.Text.Trim().Trim('"');
+        if (!Directory.Exists(path))
+        {
+            NewHint.Text = path.Length == 0 ? "Elige primero la carpeta del proyecto." : "La carpeta no existe.";
+            NewHint.Visibility = Visibility.Visible;
+            NewFolder.Focus(FocusState.Programmatic);
+            return;
+        }
+        var text = Composer.Text;
+        var files = newDraft.Files.ToList();
+        if (text.Trim().Length == 0 && files.Count == 0) return;
+
+        if (store.Create(path, ChatProvider.Claude) is not { } id) return; // el store deja el aviso en ErrorMessage
+        newMode = false;
+        shownId = null;
+        draft = null;
+        newDraft.Text = "";
+        newDraft.Files.Clear();
+        Composer.Text = "";
+        NewFolder.Text = "";
+        store.Send(text, id, files.Count == 0 ? null : files);
         Refresh();
     }
 }
