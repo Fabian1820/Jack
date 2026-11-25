@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import Icons from '../components/Icons.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import Demo from '../components/Demo.astro';
+import Coordinate from '../components/Coordinate.astro';
+import Light from '../components/Light.astro';
+import Outro from '../components/Outro.astro';
+---
+
+<Base
+  title="Jack — todos tus agentes, un solo mando"
+  description="App nativa para macOS que dirige Codex, Claude Code, OpenCode, Stellar Code, Antigravity y Qoder en paralelo: proyectos, sesiones, permisos, diffs y terminal en un solo chat."
+>
+  <Icons />
+  <Nav />
+  <main>
+    <Hero />
+    <Demo />
+    <Coordinate />
+    <Light />
+  </main>
+  <Outro />
+</Base>

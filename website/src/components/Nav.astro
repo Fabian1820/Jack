@@ -1,0 +1,97 @@
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a href="#" class="brand" aria-label="Jack, inicio"
+      ><img src="/favicon.svg" alt="" width="28" height="28" /><span>Jack</span
+      ><span class="ver">v0.3.74</span></a
+    >
+    <nav class="links" aria-label="Secciones">
+      <a href="#demo">La app</a><a href="#juntos">Agentes juntos</a><a href="#light">Light</a>
+    </nav>
+    <a class="btn btn-ghost nav-cta" href="https://github.com/brianmojena/Jack/releases/latest"
+      >Descargar<span aria-hidden="true">↓</span></a
+    >
+  </div>
+</header>
+
+<style>
+.nav {
+  z-index: 50;
+  border-bottom: 1px solid #0000;
+  transition:
+    background 0.3s,
+    border-color 0.3s,
+    backdrop-filter 0.3s;
+  position: fixed;
+  inset: 0 0 auto;
+}
+.nav.scrolled {
+  border-color: var(--line);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  background: #07080bb8;
+}
+.nav-inner {
+  align-items: center;
+  gap: 24px;
+  height: 64px;
+  display: flex;
+}
+.brand {
+  letter-spacing: -0.02em;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  display: flex;
+}
+.brand img {
+  width: 28px;
+  height: 28px;
+  transform: scale(1.25);
+}
+.ver {
+  font-family: var(--mono);
+  color: var(--dim);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.links {
+  gap: 4px;
+  margin-left: auto;
+  display: flex;
+}
+.links a {
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+.links a:hover {
+  color: var(--text);
+  background: #ffffff0d;
+}
+.nav-cta {
+  --h: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+@media (width<=820px) {
+  .links {
+    display: none;
+  }
+  .nav-cta {
+    margin-left: auto;
+  }
+}
+</style>
+
+<script>
+var e = document.querySelector(`.nav`),
+  t = () => e.classList.toggle(`scrolled`, window.scrollY > 12);
+window.addEventListener(`scroll`, t, { passive: !0 }), t();
+</script>

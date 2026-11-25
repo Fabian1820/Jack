@@ -1,0 +1,1560 @@
+<section class="section" id="demo">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Así se trabaja con Jack</span>
+      <h2>Seis agentes. <span class="grad">Un solo chat.</span></h2>
+      <p>
+        Cada conversación tiene su proveedor, modelo, sesión y carpeta. Ves lo que piensa el agente, las
+        herramientas que usa y cada diff, y respondes los permisos sin salir del chat.
+      </p>
+    </div>
+
+    <div class="stage reveal" id="stage" style="--d: 0.1s">
+      <div class="mac" id="mac" aria-label="Ventana de Jack con tres agentes trabajando">
+        <div class="mac-body">
+          <!-- ───────── Barra lateral ───────── -->
+          <aside class="side">
+            <div class="side-head">
+              <span class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+              <span class="side-title">Jack</span>
+              <svg class="i ghost"><use href="#i-sidebar-left"></use></svg>
+            </div>
+
+            <nav class="nav">
+              <div class="nrow">
+                <svg class="i"><use href="#i-newagent"></use></svg><span>Nuevo agente</span><kbd>⌘N</kbd>
+              </div>
+              <div class="nrow">
+                <svg class="i"><use href="#i-automations"></use></svg><span>Automatizaciones</span>
+              </div>
+              <div class="nrow"><svg class="i"><use href="#i-cloud"></use></svg><span>Claude Code Cloud</span></div>
+              <div class="nrow"><svg class="i"><use href="#i-chat"></use></svg><span>Claude Chat</span></div>
+              <div class="nrow"><svg class="i"><use href="#i-stack"></use></svg><span>Artefactos</span></div>
+              <div class="nrow"><svg class="i"><use href="#i-office"></use></svg><span>Oficina</span></div>
+              <div class="nrow search">
+                <svg class="i"><use href="#i-search"></use></svg><span>Buscar</span><kbd>⌘F</kbd>
+              </div>
+            </nav>
+
+            <div class="list">
+              <div class="list-head">
+                <span>Proyectos</span>
+                <span class="list-tools">
+                  <svg class="i"><use href="#i-sparkles"></use></svg>
+                  <svg class="i"><use href="#i-sort"></use></svg>
+                  <svg class="i"><use href="#i-plus"></use></svg>
+                </span>
+              </div>
+
+              <div class="prow">
+                <svg class="i"><use href="#i-folder"></use></svg><b>jack</b><em>4</em>
+                <span class="live"><i></i>2</span>
+                <svg class="chev open"><use href="#i-chevron"></use></svg>
+              </div>
+
+              <div class="srow sel">
+                <span class="sdot" id="side-dot" data-state="running">
+                  <i class="spin"></i>
+                  <svg class="hand"><use href="#i-hand"></use></svg>
+                  <i class="dot"></i>
+                </span>
+                <svg class="plogo" style="color: #d97757"><use href="#p-claude"></use></svg>
+                <span class="stitle">Dividir ChatStore en módulos</span>
+                <span class="sage">ahora</span>
+                <span class="ssub" id="side-sub">Preparando…</span>
+              </div>
+              <div class="srow">
+                <span class="sdot" data-state="running"><i class="spin"></i></span>
+                <svg class="plogo" style="color: rgba(255, 255, 255, 0.85)"><use href="#p-codex"></use></svg>
+                <span class="stitle">Tests de ChatStore</span>
+                <span class="sage">1m</span>
+                <span class="ssub">Pensando…</span>
+              </div>
+              <div class="srow">
+                <span class="sdot" data-state="unread"><i class="dot"></i></span>
+                <svg class="plogo" style="color: #30d158"><use href="#p-antigravity"></use></svg>
+                <span class="stitle strong">Revisar panel de uso</span>
+                <span class="sage">14m</span>
+              </div>
+              <div class="srow">
+                <span class="sdot" data-state="read"><i class="dot"></i></span>
+                <svg class="plogo" style="color: #40c8e0"><use href="#p-opencode"></use></svg>
+                <span class="stitle">Actualizar README</span>
+                <span class="sage">1h</span>
+              </div>
+
+              <div class="prow">
+                <svg class="i"><use href="#i-folder"></use></svg><b>api-server</b><em>3</em>
+                <span class="live"><i></i>1</span>
+                <svg class="chev open"><use href="#i-chevron"></use></svg>
+              </div>
+
+              <div class="srow">
+                <span class="sdot" data-state="waiting"><svg class="hand"><use href="#i-hand"></use></svg></span>
+                <svg class="plogo" style="color: #d97757"><use href="#p-claude"></use></svg>
+                <span class="stitle">Migrar base de datos</span>
+                <span class="sage">2m</span>
+                <span class="ssub amber">Permiso: Ejecutar un comando</span>
+              </div>
+              <div class="srow">
+                <span class="sdot" data-state="running"><i class="spin"></i></span>
+                <svg class="plogo" style="color: rgba(255, 255, 255, 0.85)"><use href="#p-codex"></use></svg>
+                <span class="stitle">Endpoint de facturación</span>
+                <span class="sage">3m</span>
+                <span class="ssub">Escribiendo respuesta…</span>
+              </div>
+              <div class="srow wb">
+                <span class="sdot" data-state="read"><i class="dot"></i></span>
+                <svg class="plogo" style="color: #5e5ce6"><use href="#p-stellar"></use></svg>
+                <span class="stitle">Revisar migraciones</span>
+                <span class="beta">BETA</span>
+                <span class="sage">2h</span>
+              </div>
+
+              <div class="prow">
+                <svg class="i"><use href="#i-folder-fill"></use></svg><b>landing</b><em>2</em>
+                <svg class="chev"><use href="#i-chevron"></use></svg>
+              </div>
+              <div class="prow">
+                <svg class="i"><use href="#i-folder-fill"></use></svg><b>mobile-app</b><em>5</em>
+                <svg class="chev"><use href="#i-chevron"></use></svg>
+              </div>
+            </div>
+
+            <div class="side-foot"><svg class="i"><use href="#i-gear"></use></svg></div>
+          </aside>
+          <div class="vsep"></div>
+
+          <!-- ───────── Detalle ───────── -->
+          <div class="main">
+            <div class="strip">
+              <div class="tabs">
+                <div class="tab on">
+                  <span class="ticon" id="tab-icon" data-state="running">
+                    <i class="spin"></i>
+                    <svg class="hand"><use href="#i-hand"></use></svg>
+                    <svg class="plogo" style="color: #d97757"><use href="#p-claude"></use></svg>
+                  </span>
+                  <span class="ttitle">Dividir ChatStore en módulos</span>
+                  <svg class="tx"><use href="#i-x"></use></svg>
+                </div>
+                <div class="tab">
+                  <span class="ticon" data-state="running"><i class="spin"></i></span>
+                  <span class="ttitle">Tests de ChatStore</span>
+                </div>
+                <div class="tab">
+                  <span class="ticon" data-state="unread"><i class="dot"></i></span>
+                  <span class="ttitle">Revisar panel de uso</span>
+                </div>
+                <span class="sbtn"><svg class="i"><use href="#i-plus"></use></svg></span>
+                <span class="sbtn"><svg class="i"><use href="#i-close-all"></use></svg></span>
+              </div>
+              <div class="toggles">
+                <span class="tg on"><svg class="i"><use href="#i-terminal"></use></svg></span>
+                <span class="tg"><svg class="i"><use href="#i-globe"></use></svg></span>
+                <span class="tg"><svg class="i"><use href="#i-phone"></use></svg></span>
+                <span class="tg"><svg class="i"><use href="#i-branch"></use></svg></span>
+                <span class="tg"><svg class="i"><use href="#i-flow"></use></svg></span>
+                <span class="tg"><svg class="i"><use href="#i-sidebar-right"></use></svg></span>
+              </div>
+            </div>
+
+            <div class="split">
+              <!-- Chat -->
+              <div class="chat">
+                <div class="feed" id="feed" aria-live="off">
+                  <div class="uprompt" id="s-prompt" hidden>
+                    <b class="chev-p">›</b><span class="utext" id="prompt-text"></span>
+                  </div>
+
+                  <div class="think" id="s-think" hidden>
+                    <span class="tglyph">✻</span>
+                    <span class="thought">
+                      Voy a separar el archivo del chat del almacén para que cada parte tenga una sola
+                      responsabilidad.
+                    </span>
+                  </div>
+
+                  <div class="tool" id="s-read" hidden>
+                    <svg class="tchev"><use href="#i-chevron"></use></svg>
+                    <svg class="ticn"><use href="#i-doc"></use></svg>
+                    <b class="verb">Leyó</b>
+                    <span class="subj">Sources/JackCore/ChatStore.swift</span>
+                    <svg class="tok"><use href="#i-check"></use></svg>
+                  </div>
+
+                  <div class="tool" id="s-rg" hidden>
+                    <svg class="tchev"><use href="#i-chevron"></use></svg>
+                    <svg class="ticn"><use href="#i-cmd"></use></svg>
+                    <b class="verb">Ejecutó</b>
+                    <span class="subj">rg "archive" Sources/JackCore</span>
+                    <svg class="tok"><use href="#i-check"></use></svg>
+                  </div>
+
+                  <div class="tgroup" id="s-edit" hidden>
+                    <div class="tool">
+                      <svg class="tchev open"><use href="#i-chevron"></use></svg>
+                      <svg class="ticn"><use href="#i-pencil"></use></svg>
+                      <b class="verb">Editó</b>
+                      <span class="subj">Sources/JackCore/ChatArchive.swift</span>
+                      <svg class="tok"><use href="#i-check"></use></svg>
+                    </div>
+                    <div class="diff">
+                      <div class="dl hunk"><span></span><code>@@ -12,7 +12,11 @@</code></div>
+                      <div class="dl"><span></span><code>public final class ChatStore &#123;</code></div>
+                      <div class="dl rem"><span>−</span><code>    var archive: [ChatConversation] = []</code></div>
+                      <div class="dl add"><span>+</span><code>    let archive: ChatArchive</code></div>
+                      <div class="dl add"><span>+</span><code>    init(archive: ChatArchive = .init()) &#123;</code></div>
+                      <div class="dl add"><span>+</span><code>        self.archive = archive</code></div>
+                      <div class="dl add"><span>+</span><code>    &#125;</code></div>
+                      <div class="dl"><span></span><code>&#125;</code></div>
+                    </div>
+                  </div>
+
+                  <div class="tool" id="s-delegate" hidden>
+                    <svg class="tchev"><use href="#i-chevron"></use></svg>
+                    <svg class="ticn"><use href="#i-agent"></use></svg>
+                    <b class="verb">Delegó a</b>
+                    <span class="subj">Codex · Tests de ChatStore</span>
+                    <svg class="tok"><use href="#i-check"></use></svg>
+                  </div>
+
+                  <div class="tool" id="s-run" hidden>
+                    <svg class="tchev"><use href="#i-chevron"></use></svg>
+                    <svg class="ticn"><use href="#i-cmd"></use></svg>
+                    <b class="verb" id="run-verb">Ejecutando</b>
+                    <span class="subj">swift test --filter ChatStoreTests</span>
+                    <i class="spin mini" id="run-spin"></i>
+                    <svg class="tok" id="run-ok" hidden><use href="#i-check"></use></svg>
+                  </div>
+
+                  <div class="answer" id="s-answer" hidden>
+                    <span class="bullet"></span><span class="atext" id="answer-text"></span>
+                  </div>
+                </div>
+
+                <div class="dock">
+                  <div class="perm" id="perm" hidden>
+                    <div class="perm-head">
+                      <svg class="i"><use href="#i-hand"></use></svg><span>Claude Code necesita tu permiso</span>
+                    </div>
+                    <div class="perm-title">Ejecutar un comando</div>
+                    <div class="perm-desc">Ejecutar las pruebas de ChatStore</div>
+                    <div class="out">$ swift test --filter ChatStoreTests</div>
+                    <div class="perm-actions">
+                      <span class="perm-hint">O escribe en el chat qué debe hacer en su lugar</span>
+                      <span class="pbtn">Rechazar</span>
+                      <span class="pbtn prim" id="allow">Permitir</span>
+                    </div>
+                    <div class="perm-extra">
+                      <span class="pbtn">Permitir siempre <code>swift test</code> en este proyecto</span>
+                    </div>
+                  </div>
+
+                  <div class="activity" id="activity" hidden>
+                    <i class="spin mini"></i><span id="activity-text">Preparando…</span>
+                    <span class="act-tokens" id="act-tokens"></span>
+                  </div>
+
+                  <div class="composer">
+                    <div class="ctext">
+                      <b class="chev-p">›</b>
+                      <span class="ph" id="ph">
+                        Claude Code está trabajando · lo leerá al terminar el paso · ⌘↩ interrumpe
+                      </span>
+                    </div>
+                    <div class="crow">
+                      <span class="ctx" title="Ventana de contexto">
+                        <svg class="ring" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" class="ring-bg"></circle>
+                          <circle cx="12" cy="12" r="10" class="ring-fg" pathLength="100" stroke-dasharray="38 100"
+                          ></circle>
+                        </svg>
+                        <svg class="plogo" style="color: #d97757"><use href="#p-claude"></use></svg>
+                      </span>
+                      <span class="menu">Opus 5.5<svg class="mchev"><use href="#i-chevron-down"></use></svg></span>
+                      <span class="menu">Medio<svg class="mchev"><use href="#i-chevron-down"></use></svg></span>
+                      <span class="menu">Manual<svg class="mchev"><use href="#i-chevron-down"></use></svg></span>
+                      <span class="cspace"></span>
+                      <span class="cbtn"><svg class="i"><use href="#i-clock"></use></svg></span>
+                      <span class="cbtn"><svg class="i"><use href="#i-folder-plus"></use></svg></span>
+                      <span class="cbtn"><svg class="i"><use href="#i-aside"></use></svg></span>
+                      <span class="cbtn"><svg class="i"><use href="#i-paperclip"></use></svg></span>
+                      <span class="cbtn"><svg class="i"><use href="#i-mic"></use></svg></span>
+                      <span class="send" id="send-btn" data-busy="true">
+                        <svg class="i s-stop"><use href="#i-stop"></use></svg>
+                        <svg class="i s-up"><use href="#i-arrow-up"></use></svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="vsep"></div>
+
+              <!-- Panel de terminal -->
+              <div class="panel">
+                <div class="strip small">
+                  <div class="ptab on">
+                    <svg class="i"><use href="#i-terminal"></use></svg><span>Terminal 1</span>
+                  </div>
+                  <span class="sbtn"><svg class="i"><use href="#i-plus"></use></svg></span>
+                  <span class="cspace"></span>
+                  <span class="sbtn"><svg class="i"><use href="#i-x"></use></svg></span>
+                </div>
+                <div class="term">
+                  <div><span class="tp">ruben@mac jack %</span> git status -sb</div>
+                  <div class="tdim">## main...origin/main [ahead 2]</div>
+                  <div><span class="tr"> M</span> Sources/JackCore/ChatStore.swift</div>
+                  <div><span class="tr">??</span> Sources/JackCore/ChatArchive.swift</div>
+                  <div><span class="tp">ruben@mac jack %</span> <span class="tcursor"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ───────── Barra de estado ───────── -->
+        <div class="status">
+          <div class="sleft">
+            <span class="quota">
+              <svg class="plogo" style="color: rgba(255, 255, 255, 0.85)"><use href="#p-codex"></use></svg>
+              <i class="cap"><b style="width: 38%"></b></i>3 h 12 min
+            </span>
+            <span class="quota">
+              <svg class="plogo" style="color: #d97757"><use href="#p-claude"></use></svg>
+              <i class="cap"><b style="width: 62%; background: var(--amber)"></b></i>1 h 40 min
+            </span>
+            <span class="quota">
+              <svg class="plogo" style="color: #30d158"><use href="#p-antigravity"></use></svg>
+              <i class="cap"><b style="width: 21%"></b></i>4 h 3 min
+            </span>
+            <svg class="i faint"><use href="#i-refresh"></use></svg>
+          </div>
+          <div class="sright">
+            <span class="si green"><svg class="i"><use href="#i-server"></use></svg>2</span>
+            <span class="si accent">
+              <svg class="i"><use href="#i-download"></use></svg><i class="cap wide"><b style="width: 64%"></b></i>
+            </span>
+            <span class="si"><svg class="i"><use href="#i-memchip"></use></svg>312 MB</span>
+            <span class="si"><svg class="i"><use href="#i-cpu"></use></svg>Jack 0.3 % · Sistema 12.4 %</span>
+            <span class="si"><svg class="i"><use href="#i-terminal"></use></svg>1</span>
+            <span class="si"><svg class="i"><use href="#i-leaf"></use></svg></span>
+            <span class="si"><i class="gdot"></i>3/4 activos</span>
+            <span class="si lswitch"><i class="sw"><b></b></i>Light</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.stage {
+  aspect-ratio: 1280 / 760;
+  width: 100%;
+  position: relative;
+}
+.mac {
+  --canvas: #0e0e0f;
+  --chrome: #161618;
+  --sel: rgba(255, 255, 255, 0.085);
+  --panel: rgba(255, 255, 255, 0.05);
+  --panel2: rgba(255, 255, 255, 0.08);
+  --code: rgba(255, 255, 255, 0.035);
+  --hair: rgba(255, 255, 255, 0.085);
+  --txt: rgba(255, 255, 255, 0.85);
+  --txt2: rgba(255, 255, 255, 0.73);
+  --muted: rgba(235, 235, 245, 0.6);
+  --faint: rgba(235, 235, 245, 0.3);
+  --accent: #0a84ff;
+  --green: #30d158;
+  --amber: #ff9f0a;
+  --red: #ff453a;
+  --add: #1f4d2b;
+  --rem: #5c2324;
+  --ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  width: 1280px;
+  height: 760px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scale(var(--k, 0.92));
+  transform-origin: 0 0;
+  background: var(--canvas);
+  color: var(--txt);
+  font-family: var(--ui);
+  font-size: 12.5px;
+  line-height: 1.3;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow:
+    0 40px 120px -20px #000c,
+    0 0 0 1px #0008;
+  flex-direction: column;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mac :is(div, span, b, em, i, svg, nav, aside, code, kbd) {
+  box-sizing: border-box;
+}
+.mac b,
+.mac em,
+.mac kbd {
+  font-style: normal;
+}
+.mac svg.i {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+.mac-body {
+  flex: 1;
+  grid-template-columns: 264px 1px minmax(0, 1fr);
+  min-height: 0;
+  display: grid;
+}
+.vsep {
+  background: var(--hair);
+}
+
+/* ── Barra lateral ── */
+.side {
+  background: var(--chrome);
+  flex-direction: column;
+  min-width: 0;
+  display: flex;
+}
+.side-head {
+  height: 38px;
+  flex: none;
+  align-items: center;
+  padding-right: 12px;
+  display: flex;
+  position: relative;
+}
+.lights {
+  gap: 8px;
+  display: flex;
+  position: absolute;
+  left: 8px;
+}
+.lights i {
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+}
+.lights .r {
+  background: #ff5f57;
+}
+.lights .y {
+  background: #febc2e;
+}
+.lights .g {
+  background: #28c840;
+}
+.side-title {
+  color: var(--txt2);
+  margin-left: 80px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ghost {
+  color: var(--muted);
+  margin-left: auto;
+}
+.nav {
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 8px 8px;
+  display: flex;
+}
+.nrow {
+  height: 27px;
+  color: var(--txt);
+  border-radius: 6px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  display: flex;
+}
+.nrow .i {
+  color: var(--muted);
+  width: 14px;
+  height: 14px;
+}
+.nrow span {
+  flex: 1;
+}
+.nrow kbd {
+  color: var(--faint);
+  font-family: var(--ui);
+  font-size: 10.5px;
+  min-width: 0;
+  height: auto;
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline;
+}
+.nrow.search {
+  background: var(--panel);
+  margin-top: 5px;
+}
+.nrow.search span {
+  color: var(--muted);
+}
+
+.list {
+  flex-direction: column;
+  flex: 1;
+  gap: 1px;
+  min-height: 0;
+  padding: 6px 8px 0;
+  display: flex;
+  overflow: hidden;
+}
+.list-head {
+  color: var(--muted);
+  justify-content: space-between;
+  align-items: center;
+  height: 24px;
+  margin-bottom: 2px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  display: flex;
+}
+.list-tools {
+  color: var(--muted);
+  gap: 9px;
+  display: flex;
+}
+.list-tools .i {
+  width: 12px;
+  height: 12px;
+}
+.prow {
+  height: 28px;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+  padding: 0 8px;
+  display: flex;
+}
+.prow .i {
+  color: var(--muted);
+  width: 13px;
+  height: 13px;
+}
+.prow b {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.prow em {
+  color: var(--faint);
+  font-size: 11px;
+}
+.live {
+  color: var(--muted);
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 11px;
+  display: flex;
+}
+.live i {
+  background: var(--green);
+  border-radius: 50%;
+  width: 5px;
+  height: 5px;
+}
+.chev {
+  width: 9px;
+  height: 9px;
+  color: var(--faint);
+  flex: none;
+  transition: transform 0.2s;
+}
+.prow > .chev:last-child {
+  margin-left: auto;
+}
+.prow .live ~ .chev {
+  margin-left: 6px;
+}
+.chev.open {
+  transform: rotate(90deg);
+}
+
+.srow {
+  grid-template-columns: 12px 12px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 7px;
+  border-radius: 6px;
+  padding: 5px 8px 5px 18px;
+  display: grid;
+}
+.srow.sel {
+  background: var(--sel);
+}
+.srow .plogo {
+  width: 12px;
+  height: 12px;
+}
+.stitle {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--txt);
+  font-size: 12.5px;
+  overflow: hidden;
+}
+.stitle.strong {
+  font-weight: 600;
+}
+.sage {
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  grid-column: 4;
+  font-size: 10.5px;
+}
+.beta {
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  background: var(--panel2);
+  border-radius: 3px;
+  grid-column: 4;
+  padding: 1px 4px;
+  font-size: 8.5px;
+  font-weight: 600;
+}
+.srow.wb {
+  grid-template-columns: 12px 12px minmax(0, 1fr) auto auto;
+}
+.srow.wb .sage {
+  grid-column: 5;
+}
+.ssub {
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  grid-column: 3 / -1;
+  margin-top: 1px;
+  font-size: 11px;
+  overflow: hidden;
+}
+.ssub.amber,
+.ssub[data-tone='amber'] {
+  color: var(--amber);
+}
+.ssub[hidden] {
+  display: none;
+}
+.side-foot {
+  flex: none;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px;
+  display: flex;
+}
+.side-foot .i {
+  color: var(--muted);
+  width: 14px;
+  height: 14px;
+}
+
+/* indicadores de estado (StatusDot) */
+.sdot,
+.ticon {
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  display: grid;
+  position: relative;
+}
+.sdot > *,
+.ticon > * {
+  grid-area: 1 / 1;
+  display: none;
+}
+.sdot[data-state='running'] .spin,
+.ticon[data-state='running'] .spin {
+  display: block;
+}
+.sdot[data-state='waiting'] .hand,
+.ticon[data-state='waiting'] .hand {
+  color: var(--amber);
+  width: 9px;
+  height: 9px;
+  display: block;
+}
+.sdot[data-state='unread'] .dot {
+  background: var(--accent);
+  width: 7px;
+  height: 7px;
+  display: block;
+}
+.sdot[data-state='read'] .dot {
+  background: var(--faint);
+  width: 5px;
+  height: 5px;
+  display: block;
+}
+.dot {
+  border-radius: 50%;
+}
+.ticon[data-state='unread'] .dot {
+  background: var(--accent);
+  width: 7px;
+  height: 7px;
+  display: block;
+}
+.ticon[data-state='idle'] .plogo {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+.spin {
+  border: 1.5px solid #ffffff2e;
+  border-top-color: var(--txt);
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  animation: 0.8s linear infinite mspin;
+}
+.spin.mini {
+  flex: none;
+}
+@keyframes mspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Franja de pestañas ── */
+.main {
+  background: var(--canvas);
+  flex-direction: column;
+  min-width: 0;
+  display: flex;
+}
+.strip {
+  background: var(--chrome);
+  border-bottom: 1px solid var(--hair);
+  height: 38px;
+  flex: none;
+  align-items: stretch;
+  display: flex;
+}
+.tabs {
+  flex: 1;
+  align-items: stretch;
+  min-width: 0;
+  display: flex;
+}
+.tab {
+  border-right: 1px solid var(--hair);
+  color: var(--muted);
+  white-space: nowrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 72px;
+  max-width: 200px;
+  padding: 0 10px;
+  font-size: 12px;
+  display: flex;
+  position: relative;
+}
+.tab.on {
+  background: var(--canvas);
+  color: var(--txt);
+  margin-bottom: -1px;
+}
+.tab.on::before {
+  content: '';
+  background: var(--accent);
+  height: 1.5px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+.ttitle {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.tx {
+  width: 8.5px;
+  height: 8.5px;
+  color: var(--muted);
+  flex: none;
+  margin-left: 2px;
+}
+.sbtn {
+  color: var(--muted);
+  place-items: center;
+  width: 30px;
+  display: grid;
+}
+.sbtn .i {
+  width: 12px;
+  height: 12px;
+}
+.toggles {
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  display: flex;
+}
+.tg {
+  color: var(--muted);
+  border-radius: 6px;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  display: grid;
+}
+.tg.on {
+  background: var(--sel);
+  color: var(--txt);
+}
+.tg .i {
+  width: 13px;
+  height: 13px;
+}
+
+/* ── Chat y panel ── */
+.split {
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 1px 400px;
+  min-height: 0;
+  display: grid;
+}
+.chat {
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+.feed {
+  font-family: var(--mono);
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  min-height: 0;
+  padding: 18px 22px 14px;
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#0000, #000 36px);
+  mask-image: linear-gradient(#0000, #000 36px);
+  transition: opacity 0.5s;
+}
+.feed.fade {
+  opacity: 0;
+}
+.feed > [hidden],
+.dock > [hidden] {
+  display: none;
+}
+.pop {
+  animation: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both mpop;
+}
+@keyframes mpop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.chev-p {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.uprompt {
+  background: var(--panel);
+  border-left: 2px solid #0a84ffb3;
+  border-radius: 6px;
+  flex: none;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 12px;
+  display: flex;
+}
+.utext {
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.think {
+  color: var(--muted);
+  flex: none;
+  gap: 9px;
+  padding-left: 4px;
+  display: flex;
+}
+.tglyph {
+  color: var(--faint);
+  width: 12px;
+  font-size: 12px;
+}
+.thought {
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.5;
+}
+.tool {
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  min-height: 20px;
+  padding-left: 4px;
+  display: flex;
+}
+.tchev {
+  width: 9px;
+  height: 9px;
+  color: var(--faint);
+  flex: none;
+}
+.tchev.open {
+  transform: rotate(90deg);
+}
+.ticn {
+  width: 11px;
+  height: 11px;
+  color: var(--muted);
+  flex: none;
+}
+.verb {
+  font-family: var(--ui);
+  font-size: 12px;
+  font-weight: 600;
+}
+.subj {
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  overflow: hidden;
+}
+.tok {
+  width: 10px;
+  height: 10px;
+  color: #30d158d9;
+  flex: none;
+  margin-left: auto;
+}
+.tok[hidden] {
+  display: none;
+}
+.tgroup {
+  flex-direction: column;
+  flex: none;
+  gap: 6px;
+  display: flex;
+}
+.tgroup[hidden] {
+  display: none;
+}
+.diff {
+  background: var(--code);
+  border: 0.5px solid var(--hair);
+  margin-left: 29px;
+  padding: 5px 0;
+  overflow: hidden;
+}
+.dl {
+  grid-template-columns: 10px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 6px;
+  min-height: 15px;
+  padding: 0 8px;
+  font-size: 11px;
+  display: grid;
+}
+.dl code {
+  white-space: pre;
+  font-family: var(--mono);
+}
+.dl.hunk {
+  color: var(--muted);
+}
+.dl.add {
+  background: var(--add);
+}
+.dl.rem {
+  background: var(--rem);
+}
+.dl.add span {
+  color: #30d158;
+}
+.dl.rem span {
+  color: #ff453a;
+}
+.answer {
+  flex: none;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 4px;
+  display: flex;
+}
+.answer[hidden] {
+  display: none;
+}
+.bullet {
+  background: #ffffffd9;
+  border-radius: 50%;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 7px 2px 0 0;
+}
+.atext {
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.atext b {
+  color: #fff;
+}
+.caret {
+  vertical-align: -2px;
+  background: var(--txt);
+  width: 7px;
+  height: 1em;
+  margin-left: 1px;
+  animation: 1s steps(2, end) infinite mcaret;
+  display: inline-block;
+}
+@keyframes mcaret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── Zona inferior del chat ── */
+.dock {
+  flex-direction: column;
+  flex: none;
+  gap: 6px;
+  padding: 0 22px 12px;
+  display: flex;
+}
+.perm {
+  background: rgba(255, 159, 10, 0.07);
+  border: 1px solid rgba(255, 159, 10, 0.35);
+  border-radius: 10px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  display: flex;
+}
+.perm-head {
+  color: var(--amber);
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+}
+.perm-head .i {
+  width: 11px;
+  height: 11px;
+}
+.perm-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+.perm-desc {
+  color: var(--txt2);
+  font-size: 12px;
+}
+.out {
+  background: var(--code);
+  border: 0.5px solid var(--hair);
+  border-radius: 7px;
+  padding: 9px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.perm-actions {
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  display: flex;
+}
+.perm-hint {
+  color: var(--muted);
+  flex: 1;
+  font-size: 11px;
+}
+.pbtn {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  transition:
+    transform 0.2s,
+    background 0.2s;
+  display: inline-block;
+}
+.pbtn.prim {
+  background: var(--accent);
+  color: #fff;
+}
+.pbtn.prim.press {
+  background: #409cff;
+  transform: scale(0.94);
+}
+.pbtn code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.perm-extra {
+  display: flex;
+}
+.activity {
+  color: var(--muted);
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+}
+.act-tokens {
+  color: var(--faint);
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 400;
+}
+.composer {
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 8px;
+  display: flex;
+}
+.ctext {
+  align-items: baseline;
+  gap: 8px;
+  min-height: 20px;
+  display: flex;
+}
+.ctext .chev-p {
+  font-size: 14.5px;
+}
+.ph {
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.crow {
+  color: var(--muted);
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+}
+.cspace {
+  flex: 1;
+}
+.ctx {
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  position: relative;
+}
+.ctx > * {
+  grid-area: 1 / 1;
+}
+.ctx .plogo {
+  width: 13px;
+  height: 13px;
+}
+.ring {
+  width: 22px;
+  height: 22px;
+  transform: rotate(-90deg);
+}
+.ring circle {
+  fill: none;
+  stroke-width: 2;
+}
+.ring-bg {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+.ring-fg {
+  stroke: var(--muted);
+  stroke-linecap: round;
+}
+.menu {
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  display: flex;
+}
+.mchev {
+  width: 7px;
+  height: 7px;
+}
+.cbtn {
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  display: grid;
+}
+.cbtn .i {
+  width: 13px;
+  height: 13px;
+}
+.send {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 2px;
+  display: grid;
+}
+.send .i {
+  width: 11px;
+  height: 11px;
+}
+.send[data-busy='true'] .s-up,
+.send[data-busy='false'] .s-stop {
+  display: none;
+}
+
+/* ── Panel del terminal ── */
+.panel {
+  background: var(--canvas);
+  flex-direction: column;
+  min-width: 0;
+  display: flex;
+}
+.strip.small {
+  padding: 0 4px;
+}
+.ptab {
+  color: var(--txt);
+  background: var(--sel);
+  border-radius: 6px;
+  align-self: center;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px;
+  font-size: 11.5px;
+  display: flex;
+}
+.ptab .i {
+  width: 11px;
+  height: 11px;
+}
+.term {
+  font-family: var(--mono);
+  color: #d1d1d6;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.tp {
+  color: #63d47a;
+}
+.tr {
+  color: #ff6b63;
+}
+.tdim {
+  color: #6e6e73;
+}
+.tcursor {
+  background: var(--accent);
+  vertical-align: -2px;
+  width: 2px;
+  height: 14px;
+  animation: 1.1s steps(2, end) infinite mcaret;
+  display: inline-block;
+}
+
+/* ── Barra de estado ── */
+.status {
+  background: var(--chrome);
+  border-top: 1px solid var(--hair);
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+  justify-content: space-between;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  font-size: 11px;
+  display: flex;
+  overflow: hidden;
+}
+.sleft,
+.sright {
+  align-items: center;
+  gap: 14px;
+  display: flex;
+}
+.quota {
+  align-items: center;
+  gap: 5px;
+  display: flex;
+}
+.quota .plogo {
+  width: 11px;
+  height: 11px;
+}
+.cap {
+  background: var(--panel2);
+  border-radius: 99px;
+  width: 34px;
+  height: 4px;
+  display: inline-block;
+  overflow: hidden;
+}
+.cap.wide {
+  width: 46px;
+}
+.cap b {
+  background: var(--muted);
+  border-radius: 99px;
+  height: 100%;
+  display: block;
+}
+.accent .cap b {
+  background: var(--accent);
+}
+.faint {
+  color: var(--faint);
+}
+.si {
+  align-items: center;
+  gap: 4px;
+  display: flex;
+}
+.si .i {
+  width: 11px;
+  height: 11px;
+}
+.si.green {
+  color: var(--green);
+}
+.si.accent {
+  color: var(--accent);
+}
+.gdot {
+  background: var(--green);
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+}
+.lswitch {
+  gap: 5px;
+}
+.sw {
+  background: var(--panel2);
+  border-radius: 99px;
+  width: 22px;
+  height: 12px;
+  padding: 1px;
+  display: block;
+}
+.sw b {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+</style>
+
+<script>
+const mac = document.getElementById('mac');
+const stage = document.getElementById('stage');
+
+if (mac && stage) {
+  // La maqueta se dibuja a 1280×760 y se escala al ancho disponible.
+  const fit = () => mac.style.setProperty('--k', String(stage.clientWidth / 1280));
+  fit();
+  new ResizeObserver(fit).observe(stage);
+
+  const $ = (id: string) => document.getElementById(id) as HTMLElement;
+  const feed = $('feed');
+  const perm = $('perm');
+  const activity = $('activity');
+  const activityText = $('activity-text');
+  const tokens = $('act-tokens');
+  const ph = $('ph');
+  const send = $('send-btn');
+  const sideDot = $('side-dot');
+  const tabIcon = $('tab-icon');
+  const sideSub = $('side-sub');
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const paused = () => document.documentElement.dataset.light === 'on';
+  const sleep = async (ms: number) => {
+    await new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+    while (paused() && !reduced) await new Promise((r) => setTimeout(r, 250));
+  };
+
+  const WORKING = 'Claude Code está trabajando · lo leerá al terminar el paso · ⌘↩ interrumpe';
+  const IDLE = 'Escribe a Claude Code…   ! Jack · / proveedor';
+  const PROMPT = 'Divide ChatStore en módulos más pequeños y añade tests. Mantén la API pública igual.';
+  const ANSWER =
+    'Moví el almacenamiento a <b>ChatArchive</b> y dejé <b>ChatStore</b> como fachada, así que la API pública no cambia. Los <b>14 tests</b> pasan y Codex sigue ampliando la cobertura en su chat.';
+
+  const bottom = () => (feed.scrollTop = feed.scrollHeight);
+  const show = (id: string) => {
+    const el = $(id);
+    el.hidden = false;
+    el.classList.add('pop');
+    bottom();
+    return el;
+  };
+  const work = (text: string | null) => {
+    activity.hidden = text === null;
+    if (text !== null) activityText.textContent = text;
+  };
+  const state = (value: 'running' | 'waiting' | 'idle', sub: string | null) => {
+    sideDot.dataset.state = value;
+    tabIcon.dataset.state = value;
+    sideSub.hidden = sub === null;
+    if (sub !== null) {
+      sideSub.textContent = sub;
+      sideSub.dataset.tone = value === 'waiting' ? 'amber' : '';
+    }
+    const busy = value !== 'idle';
+    send.dataset.busy = String(busy);
+    ph.textContent = busy ? WORKING : IDLE;
+  };
+
+  async function type(target: HTMLElement, html: string, speed: number) {
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    const chunks = html.match(/<[^>]+>[^<]*<\/[^>]+>|[^<]/g) ?? [];
+    let out = '';
+    for (const chunk of chunks) {
+      out += chunk;
+      target.innerHTML = out;
+      target.appendChild(caret);
+      bottom();
+      await sleep(chunk.length > 1 ? speed * 3 : speed);
+    }
+    caret.remove();
+  }
+
+  function reset() {
+    feed.classList.remove('fade');
+    for (const id of ['s-prompt', 's-think', 's-read', 's-rg', 's-edit', 's-delegate', 's-run', 's-answer']) {
+      const el = $(id);
+      el.hidden = true;
+      el.classList.remove('pop');
+    }
+    $('prompt-text').textContent = '';
+    $('answer-text').textContent = '';
+    $('run-verb').textContent = 'Ejecutando';
+    $('run-spin').hidden = false;
+    $('run-ok').hidden = true;
+    $('allow').classList.remove('press');
+    perm.hidden = true;
+    tokens.textContent = '';
+    state('running', 'Preparando…');
+    work('Preparando…');
+  }
+
+  async function play() {
+    reset();
+    await sleep(700);
+    show('s-prompt');
+    await type($('prompt-text'), PROMPT, 22);
+    await sleep(350);
+    work('Pensando');
+    state('running', 'Pensando…');
+    await sleep(700);
+    show('s-think');
+    await sleep(1000);
+    show('s-read');
+    tokens.textContent = '4K tokens';
+    await sleep(500);
+    show('s-rg');
+    await sleep(600);
+    work('Editando ChatArchive.swift');
+    state('running', 'Editando ChatArchive.swift');
+    show('s-edit');
+    tokens.textContent = '8K tokens';
+    await sleep(1600);
+    show('s-delegate');
+    await sleep(900);
+    work('Ejecutando swift test --filter ChatStoreTests');
+    state('running', 'Preparando…');
+    show('s-run');
+    await sleep(900);
+    work('Esperando tu respuesta');
+    state('waiting', 'Permiso: Ejecutar un comando');
+    perm.hidden = false;
+    perm.classList.add('pop');
+    bottom();
+    await sleep(1800);
+    $('allow').classList.add('press');
+    await sleep(380);
+    perm.hidden = true;
+    $('run-verb').textContent = 'Ejecutó';
+    $('run-spin').hidden = true;
+    $('run-ok').hidden = false;
+    work('Escribiendo respuesta');
+    state('running', 'Escribiendo respuesta…');
+    tokens.textContent = '12K tokens';
+    await sleep(600);
+    show('s-answer');
+    await type($('answer-text'), ANSWER, 14);
+    await sleep(300);
+    work(null);
+    state('idle', null);
+    await sleep(4500);
+    feed.classList.add('fade');
+    await sleep(600);
+  }
+
+  let started = false;
+  let visible = false;
+  const untilVisible = () =>
+    new Promise<void>((resolve) => {
+      const check = () => (visible ? resolve() : setTimeout(check, 250));
+      check();
+    });
+
+  new IntersectionObserver(
+    ([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible && !started) {
+        started = true;
+        (async () => {
+          if (reduced) {
+            await play();
+            feed.classList.remove('fade');
+            return;
+          }
+          for (;;) {
+            await untilVisible();
+            await play();
+          }
+        })();
+      }
+    },
+    { threshold: 0.25 },
+  ).observe(stage);
+}
+</script>

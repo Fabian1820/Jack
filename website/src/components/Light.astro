@@ -1,0 +1,2334 @@
+---
+// Sección Light: una ventana de Jack Light que funciona.
+// Sigue a Sources/Jack/LightWindowView.swift: cabecera con el menú de conversaciones,
+// transcripción en texto nativo (solo Tú / Agente), permisos, mensajes en espera,
+// compositor y el interruptor del pie. El motor de abajo simula a los agentes con las
+// reglas reales de Light: texto agrupado cada 1 s, un agente a la vez por defecto,
+// cuotas y servidores solo al pulsar, e interfaz suspendida al minimizar.
+---
+
+<section class="section" id="light">
+  <div class="wrap">
+    <div class="light-grid">
+      <div class="section-head reveal">
+        <span class="eyebrow">Modo Light <kbd>⌃</kbd><kbd>⌘</kbd><kbd>L</kbd></span>
+        <h2>Cuando la batería <span class="grad">importa más que el show.</span></h2>
+        <p>
+          Light es una ventana sencilla que comparte chats, sesiones, borradores y adjuntos con Normal, pero
+          hace mucho menos trabajo. Permisos, preguntas y mensajes en espera siguen ahí.
+        </p>
+        <p class="try">
+          La de al lado funciona: escribe, cambia de conversación, responde al permiso o minimízala con el
+          botón amarillo.
+        </p>
+        <button class="toggle" id="light-toggle" type="button" aria-pressed="false">
+          <span class="sw"><i></i></span
+          ><span class="t-label"
+            ><b>Prueba Light en esta web</b><small id="light-state">Las animaciones están activas</small></span
+          >
+        </button>
+      </div>
+
+      <div class="lw-col reveal" style="--d: 0.1s">
+        <div class="lw-desk" id="lw-desk">
+          <p class="lw-away">
+            <b>Ventana minimizada.</b> Light ha suspendido la interfaz; los agentes siguen trabajando y te
+            avisan con una notificación.
+          </p>
+          <button class="lw-dock" id="lw-dock" type="button" aria-label="Volver a abrir Jack Light">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <g stroke-linecap="round" fill="currentColor" stroke="currentColor">
+                <g opacity="0.45" stroke-width="3.4">
+                  <line x1="32" y1="32" x2="32" y2="10"></line>
+                  <line x1="32" y1="32" x2="51" y2="43"></line>
+                  <line x1="32" y1="32" x2="13" y2="43"></line>
+                  <circle cx="32" cy="10" r="4.4" stroke="none"></circle>
+                  <circle cx="51" cy="43" r="4.4" stroke="none"></circle>
+                  <circle cx="13" cy="43" r="4.4" stroke="none"></circle>
+                </g>
+                <circle cx="32" cy="32" r="6.6" stroke="none"></circle>
+                <g stroke-width="4.6">
+                  <line x1="32" y1="32" x2="52.5" y2="20"></line>
+                  <line x1="32" y1="32" x2="11.5" y2="20"></line>
+                  <line x1="32" y1="32" x2="32" y2="54" stroke="#ff6a2b"></line>
+                  <circle cx="52.5" cy="20" r="6" stroke="none"></circle>
+                  <circle cx="11.5" cy="20" r="6" stroke="none"></circle>
+                  <circle cx="32" cy="54" r="6.4" stroke="none" fill="#ff6a2b"></circle>
+                </g>
+              </g>
+            </svg>
+            <i></i>
+          </button>
+
+          <div class="lw" id="lw" role="group" aria-label="Ventana de Jack en modo Light (demostración)">
+            <div class="lw-title">
+              <span class="lw-lights">
+                <i class="r"></i>
+                <button class="y" id="lw-min" type="button" aria-label="Minimizar la ventana"></button>
+                <i class="g"></i>
+              </span>
+              <span>Jack</span>
+            </div>
+
+            <div class="lw-head">
+              <div class="lw-pop">
+                <button class="lw-pull" id="lw-chats-btn" type="button" aria-haspopup="menu" aria-expanded="false">
+                  <span id="lw-chat-title"></span>
+                  <svg aria-hidden="true"><use href="#i-chevron-down"></use></svg>
+                </button>
+                <div class="lw-menu" id="lw-chats-menu" role="menu" hidden></div>
+              </div>
+              <span class="lw-grow"></span>
+              <button class="lw-b" id="lw-new" type="button" title="Nuevo agente (⌘N)">
+                <svg aria-hidden="true"><use href="#i-plus"></use></svg>Nuevo
+              </button>
+              <div class="lw-pop">
+                <button
+                  class="lw-pull icon"
+                  id="lw-more-btn"
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  aria-label="Carpetas, modelo, límites y más opciones"
+                  title="Carpetas, modelo, límites y más opciones"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+                    <circle cx="7.6" cy="12" r="1.3" fill="currentColor"></circle>
+                    <circle cx="12" cy="12" r="1.3" fill="currentColor"></circle>
+                    <circle cx="16.4" cy="12" r="1.3" fill="currentColor"></circle>
+                  </svg>
+                  <svg aria-hidden="true"><use href="#i-chevron-down"></use></svg>
+                </button>
+                <div class="lw-menu right" id="lw-more-menu" role="menu" hidden>
+                  <button type="button" role="menuitem" data-panel="options">Opciones del agente…</button>
+                  <button type="button" role="menuitem" data-panel="usage">Uso y límites…</button>
+                  <button type="button" role="menuitem" data-panel="progress">Progreso y descargas…</button>
+                  <button type="button" role="menuitem" data-panel="servers">Servidores…</button>
+                  <button type="button" role="menuitem" data-panel="files">Archivos del proyecto…</button>
+                  <button type="button" role="menuitem" data-panel="formatted">Ver texto con formato…</button>
+                  <button type="button" role="menuitem" data-panel="resume">Retomar sesión de Claude Code…</button>
+                  <hr />
+                  <button type="button" role="menuitem" data-panel="normal">Volver al modo Normal</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="lw-sub"><span id="lw-folder"></span><span id="lw-status"></span></div>
+            <div class="lw-log" id="lw-log" tabindex="0" aria-label="Conversación Light"></div>
+            <div class="lw-approval" id="lw-approval" hidden></div>
+            <div class="lw-wait" id="lw-wait" hidden></div>
+
+            <div class="lw-comp">
+              <div class="lw-chips" id="lw-files" hidden></div>
+              <textarea id="lw-input" aria-label="Mensaje" spellcheck="false" autocomplete="off"></textarea>
+              <div class="lw-row">
+                <button class="lw-b sm" id="lw-attach" type="button">
+                  <svg aria-hidden="true"><use href="#i-paperclip"></use></svg><span>Adjuntar</span>
+                </button>
+                <button class="lw-b sm" id="lw-cmds" type="button">
+                  <svg aria-hidden="true"><use href="#i-cmd"></use></svg><span>Comandos</span>
+                </button>
+                <button class="lw-b sm" id="lw-act" type="button">
+                  <svg aria-hidden="true"><use href="#i-terminal"></use></svg><span>Actividad</span>
+                </button>
+                <span class="lw-grow"></span>
+                <button class="lw-b sm" id="lw-stop" type="button" hidden>Detener</button>
+                <button class="lw-b sm" id="lw-send" type="button" disabled>Enviar</button>
+              </div>
+              <p class="lw-keys">Enter: enviar · Shift+Enter: salto de línea · ⌘Enter: interrumpir y enviar</p>
+            </div>
+
+            <div class="lw-foot">
+              <span class="lw-mode">
+                <svg aria-hidden="true"><use href="#i-leaf"></use></svg>Light
+                <button
+                  class="lw-switch"
+                  id="lw-switch"
+                  type="button"
+                  role="switch"
+                  aria-checked="true"
+                  aria-label="Modo Light"
+                  title="Desactivar Light y volver al modo Normal (⌃⌘L)"><i></i></button
+                >
+              </span>
+            </div>
+
+            <div class="lw-veil" id="lw-veil" hidden>
+              <div class="lw-sheet" role="dialog" aria-modal="true">
+                <div class="lw-sheet-body" id="lw-sheet-body"></div>
+                <div class="lw-sheet-foot" id="lw-sheet-foot"></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="lw-banner" id="lw-banner" type="button" hidden>
+            <span class="app">Jack</span><b id="lw-banner-title"></b><span id="lw-banner-body"></span>
+          </button>
+        </div>
+
+        <p class="lw-meter" id="lw-meter">
+          <span id="lw-meter-text">Envía un mensaje y mira cómo llega el texto: en bloques, una vez por segundo.</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="compare reveal" id="lw-compare">
+      <div class="c-head"><span></span><span>Normal</span><span class="lt">Light</span></div>
+      <div class="c-row" data-row="stream">
+        <span class="k">Texto en streaming</span><span class="n">agrupado cada 50 ms</span
+        ><span class="l">agrupado cada 1 s</span>
+      </div>
+      <div class="c-row" data-row="parallel">
+        <span class="k">Agentes en paralelo</span><span class="n">4 por defecto</span
+        ><span class="l">1 por defecto</span>
+      </div>
+      <div class="c-row" data-row="claude">
+        <span class="k">Sesión inactiva de Claude</span><span class="n">unos minutos</span
+        ><span class="l">hasta 30 s</span>
+      </div>
+      <div class="c-row" data-row="polling">
+        <span class="k">Cuotas, progreso, servidores</span><span class="n">consultas periódicas</span
+        ><span class="l">solo al pulsar</span>
+      </div>
+      <div class="c-row" data-row="occluded">
+        <span class="k">Ventana tapada o minimizada</span><span class="n">—</span
+        ><span class="l">suspende la interfaz</span>
+      </div>
+      <div class="c-row" data-row="chat">
+        <span class="k">Chat</span><span class="n">thinking, herramientas, diffs</span
+        ><span class="l">texto nativo de AppKit</span>
+      </div>
+      <p class="note">
+        Las filas se iluminan cuando la ventana de arriba hace justo eso. Estas medidas reducen el trabajo de
+        la app; todavía no son una medición de ahorro de batería. Las funciones nuevas llegan primero a Normal.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+.light-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+  display: grid;
+}
+.eyebrow kbd {
+  color: var(--accent-2);
+  font-size: 10px;
+}
+.toggle {
+  all: unset;
+  box-sizing: border-box;
+  border: 1px solid var(--line-2);
+  cursor: pointer;
+  background: #ffffff08;
+  border-radius: 16px;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 14px 20px 14px 14px;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+  display: inline-flex;
+}
+.toggle:hover,
+.toggle:focus-visible {
+  border-color: #ffb15c80;
+}
+.sw {
+  border: 1px solid var(--line-2);
+  background: #222838;
+  border-radius: 999px;
+  flex: none;
+  width: 52px;
+  height: 30px;
+  transition: background 0.3s;
+  position: relative;
+}
+.sw i {
+  background: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  box-shadow: 0 2px 8px #00000080;
+}
+.toggle[aria-pressed='true'] .sw {
+  background: var(--green);
+}
+.toggle[aria-pressed='true'] .sw i {
+  transform: translate(22px);
+}
+.t-label {
+  flex-direction: column;
+  display: flex;
+}
+.t-label b {
+  font-weight: 500;
+}
+.t-label small {
+  color: var(--dim);
+  font-size: 13px;
+}
+.compare {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.c-head,
+.c-row {
+  grid-template-columns: 1.2fr 1fr 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  display: grid;
+}
+.c-head {
+  font-family: var(--mono);
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.c-head .lt {
+  color: var(--green);
+}
+.c-row {
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.c-row:hover {
+  background: #ffffff05;
+}
+.c-row .k {
+  color: var(--text);
+}
+.c-row .n {
+  color: var(--dim);
+}
+.c-row .l {
+  color: var(--green);
+}
+.note {
+  color: var(--dim);
+  margin: 0;
+  padding: 14px 20px 18px;
+  font-size: 12.5px;
+}
+@media (width<=900px) {
+  .light-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (width<=520px) {
+  .c-head,
+  .c-row {
+    grid-template-columns: 1fr 1fr;
+    padding: 12px 16px;
+  }
+  .c-head span:first-child {
+    display: none;
+  }
+  .c-row .k {
+    grid-column: 1/-1;
+  }
+}
+.light-grid {
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 4.5vw, 64px);
+  display: grid;
+}
+.light-grid .section-head {
+  margin-bottom: 0;
+}
+.try {
+  color: var(--text) !important;
+  border-left: 2px solid var(--accent-2);
+  margin-top: 18px !important;
+  padding-left: 14px;
+  font-size: 15px !important;
+}
+.compare {
+  margin-top: clamp(28px, 4vw, 48px);
+}
+.c-row {
+  position: relative;
+}
+.c-row::before {
+  content: '';
+  background: var(--green);
+  opacity: 0;
+  width: 2px;
+  transition: opacity 0.4s;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+.c-row.lit {
+  background: #5ee59a12;
+}
+.c-row.lit::before {
+  opacity: 1;
+}
+.c-row.lit .k {
+  color: #fff;
+}
+@media (width<=900px) {
+  .light-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<style is:global>
+/* ── Escritorio y ventana (colores de AppKit en oscuro) ── */
+.lw-col {
+  min-width: 0;
+}
+.lw-desk {
+  height: 600px;
+  position: relative;
+}
+.lw {
+  --w-bg: #29292a;
+  --w-bar: #363637;
+  --w-field: #1c1c1d;
+  --w-label: rgba(255, 255, 255, 0.85);
+  --w-2: rgba(235, 235, 245, 0.6);
+  --w-3: rgba(235, 235, 245, 0.3);
+  --w-sep: rgba(255, 255, 255, 0.1);
+  --w-ctl: rgba(255, 255, 255, 0.13);
+  --w-blue: #0a84ff;
+  --w-amber: #ff9f0a;
+  color: var(--w-label);
+  background: var(--w-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Helvetica Neue', sans-serif;
+  border: 1px solid #ffffff24;
+  border-radius: 11px;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.35;
+  transition:
+    transform 0.5s cubic-bezier(0.5, 0, 0.3, 1),
+    opacity 0.4s;
+  transform-origin: 50% 100%;
+  display: flex;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px #000a,
+    0 44px 110px -30px #000e,
+    inset 0 1px #ffffff1a;
+}
+.lw.min {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.06);
+}
+.lw button,
+.lw textarea,
+.lw input,
+.lw select {
+  font: inherit;
+  color: inherit;
+}
+.lw svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+.lw-grow {
+  flex: 1;
+}
+.lw-title {
+  color: rgba(255, 255, 255, 0.78);
+  background: var(--w-bar);
+  border-bottom: 1px solid #0006;
+  flex: none;
+  justify-content: center;
+  align-items: center;
+  height: 28px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  position: relative;
+}
+.lw-lights {
+  gap: 8px;
+  display: flex;
+  position: absolute;
+  left: 9px;
+}
+.lw-lights > * {
+  border: 0;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+}
+.lw-lights .r {
+  background: #ff5f57;
+}
+.lw-lights .y {
+  cursor: pointer;
+  background: #febc2e;
+  position: relative;
+}
+.lw-lights .y::after {
+  content: '';
+  background: #7a5200;
+  opacity: 0;
+  border-radius: 1px;
+  width: 6px;
+  height: 1.5px;
+  position: absolute;
+  top: 5.25px;
+  left: 3px;
+}
+.lw-lights:hover .y::after,
+.lw-lights .y:focus-visible::after {
+  opacity: 1;
+}
+.lw-lights .y:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.lw-lights .g {
+  background: #28c840;
+}
+
+/* controles nativos */
+.lw-b,
+.lw-pull {
+  cursor: pointer;
+  background: var(--w-ctl);
+  white-space: nowrap;
+  border: 0;
+  border-radius: 6px;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  display: inline-flex;
+  box-shadow:
+    inset 0 0.5px #ffffff2e,
+    0 0.5px 1px #0006;
+}
+.lw-b:hover:not(:disabled),
+.lw-pull:hover {
+  background: rgba(255, 255, 255, 0.19);
+}
+.lw-b:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.26);
+}
+.lw-b:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.lw-b:focus-visible,
+.lw-pull:focus-visible,
+.lw-switch:focus-visible,
+.lw-menu button:focus-visible {
+  outline: 3px solid #0a84ff80;
+  outline-offset: 1px;
+}
+.lw-b.sm {
+  border-radius: 5px;
+  height: 19px;
+  padding: 0 7px;
+  font-size: 11px;
+}
+.lw-b.sm svg {
+  width: 11px;
+  height: 11px;
+}
+.lw-b.pri {
+  background: var(--w-blue);
+  color: #fff;
+}
+.lw-b.pri:hover:not(:disabled) {
+  background: #2b95ff;
+}
+.lw-pull {
+  min-width: 0;
+  max-width: 100%;
+}
+.lw-pull > span {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.lw-pull > svg:last-child {
+  opacity: 0.7;
+  width: 10px;
+  height: 10px;
+}
+.lw-pull.icon > svg:first-child {
+  width: 15px;
+  height: 15px;
+}
+
+.lw-head {
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  display: flex;
+}
+.lw-pop {
+  min-width: 0;
+  display: flex;
+  position: relative;
+}
+.lw-menu {
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  z-index: 6;
+  background: #2b2b2dee;
+  border: 1px solid #ffffff26;
+  border-radius: 7px;
+  flex-direction: column;
+  min-width: 232px;
+  max-width: min(330px, 80vw);
+  padding: 5px;
+  display: flex;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  box-shadow: 0 14px 40px -6px #000c;
+}
+.lw-menu[hidden] {
+  display: none;
+}
+.lw-menu.right {
+  left: auto;
+  right: 0;
+}
+.lw-menu button {
+  cursor: default;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  height: 22px;
+  padding: 0 9px;
+  overflow: hidden;
+}
+.lw-menu button:hover {
+  background: var(--w-blue);
+  color: #fff;
+}
+.lw-menu hr {
+  background: #ffffff1f;
+  border: 0;
+  height: 1px;
+  margin: 5px 9px;
+}
+
+.lw-sub {
+  color: var(--w-2);
+  border-top: 1px solid var(--w-sep);
+  flex: none;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 14px;
+  font-size: 11px;
+  display: flex;
+}
+.lw-sub span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* transcripción: un solo bloque de texto nativo */
+.lw-log {
+  overflow-wrap: anywhere;
+  flex: 1;
+  min-height: 0;
+  padding: 14px 16px 4px;
+  line-height: 19px;
+  overflow-y: auto;
+}
+.lw-log:focus-visible {
+  outline: none;
+}
+.lw-msg {
+  margin-bottom: 19px;
+}
+.lw-msg h6 {
+  color: var(--w-2);
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 17px;
+}
+.lw-msg.error h6 {
+  color: #ff453a;
+}
+.lw-msg p,
+.lw-rich p {
+  margin: 0 0 8px;
+}
+.lw-msg > :last-child,
+.lw-rich > :last-child {
+  margin-bottom: 0;
+}
+.lw-msg ul,
+.lw-rich ul {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.lw-msg li,
+.lw-rich li {
+  padding-left: 16px;
+  position: relative;
+}
+.lw-msg li::before,
+.lw-rich li::before {
+  content: '•';
+  position: absolute;
+  left: 3px;
+}
+.lw code {
+  background: var(--w-sep);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  border-radius: 3px;
+  padding: 0 3px;
+  font-size: 12px;
+}
+.lw pre {
+  background: var(--w-sep);
+  white-space: pre-wrap;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  border-radius: 4px;
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+/* permiso */
+.lw-approval {
+  flex: none;
+  max-height: 240px;
+  padding: 12px;
+  overflow-y: auto;
+}
+.lw-card {
+  background: #ff9f0a12;
+  border: 1px solid #ff9f0a59;
+  border-radius: 10px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  display: flex;
+}
+.lw-card .hd {
+  color: var(--w-amber);
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+}
+.lw-card .tt {
+  font-weight: 500;
+}
+.lw-card .why {
+  color: rgba(255, 255, 255, 0.73);
+  font-size: 12px;
+}
+.lw-card pre {
+  background: #0000004d;
+  border: 1px solid var(--w-sep);
+  border-radius: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 11.5px;
+}
+.lw-card .acts {
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+.lw-card .acts small {
+  color: var(--w-2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  overflow: hidden;
+}
+
+/* mensajes en espera */
+.lw-wait {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed #ffffff2e;
+  border-radius: 8px;
+  flex: none;
+  margin: 0 12px 8px;
+  padding: 8px 10px;
+}
+.lw-wait .hd {
+  color: rgba(255, 255, 255, 0.73);
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  display: flex;
+}
+.lw-wait .hd svg {
+  width: 11px;
+  height: 11px;
+}
+.lw-wait .hd span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.lw-wait .now {
+  color: var(--w-blue);
+  cursor: pointer;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  flex: none;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 500;
+}
+.lw-wait .now em {
+  color: var(--w-2);
+  font-style: normal;
+}
+.lw-wait .q {
+  color: rgba(255, 255, 255, 0.73);
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 12px;
+  display: flex;
+}
+.lw-wait .q > i {
+  color: var(--w-3);
+  font-family: ui-monospace, Menlo, monospace;
+  font-style: normal;
+  font-weight: 700;
+}
+.lw-wait .q > span {
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  overflow: hidden;
+}
+.lw-wait .q button {
+  color: var(--w-2);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  place-items: center;
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  display: grid;
+}
+.lw-wait .q button:hover {
+  color: #fff;
+  background: var(--w-sep);
+}
+.lw-wait .q button svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* compositor */
+.lw-comp {
+  border-top: 1px solid var(--w-sep);
+  flex-direction: column;
+  flex: none;
+  gap: 8px;
+  padding: 12px;
+  display: flex;
+}
+.lw-chips {
+  gap: 6px;
+  display: flex;
+  overflow-x: auto;
+}
+.lw-chips[hidden] {
+  display: none;
+}
+#lw-input {
+  background: var(--w-field);
+  resize: none;
+  border: 1px solid #ffffff24;
+  border-radius: 3px;
+  outline: none;
+  width: 100%;
+  height: 76px;
+  padding: 8px;
+  line-height: 17px;
+  display: block;
+  box-shadow: inset 0 1px 2px #0006;
+}
+#lw-input:focus {
+  box-shadow:
+    inset 0 1px 2px #0006,
+    0 0 0 3px #0a84ff66;
+}
+.lw-row {
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+.lw-keys {
+  color: var(--w-2);
+  margin: 0;
+  font-size: 10px;
+}
+.lw-foot {
+  background: #161618;
+  border-top: 1px solid #ffffff16;
+  flex: none;
+  justify-content: flex-end;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  display: flex;
+}
+.lw-mode {
+  color: var(--w-2);
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+}
+.lw-mode svg {
+  width: 11px;
+  height: 11px;
+}
+.lw-switch {
+  cursor: pointer;
+  background: var(--w-blue);
+  border: 0;
+  border-radius: 99px;
+  width: 26px;
+  height: 15px;
+  margin-left: 3px;
+  padding: 0;
+  transition: background 0.25s;
+  position: relative;
+}
+.lw-switch i {
+  background: #fff;
+  border-radius: 50%;
+  width: 13px;
+  height: 13px;
+  transition: transform 0.25s;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transform: translateX(11px);
+  box-shadow: 0 1px 2px #0008;
+}
+.lw-switch[aria-checked='false'] {
+  background: #ffffff38;
+}
+.lw-switch[aria-checked='false'] i {
+  transform: none;
+}
+
+/* hojas (sheets) */
+.lw-veil {
+  z-index: 8;
+  background: #00000061;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 44px 14px 14px;
+  display: flex;
+  position: absolute;
+  inset: 0;
+}
+.lw-veil[hidden] {
+  display: none;
+}
+.lw-sheet {
+  background: #2c2c2e;
+  border: 1px solid #ffffff26;
+  border-radius: 10px;
+  flex-direction: column;
+  width: min(480px, 100%);
+  max-height: 100%;
+  animation: 0.22s ease-out lw-sheet;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 30px 80px -10px #000;
+}
+@keyframes lw-sheet {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+.lw-sheet-body {
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 20px;
+  display: flex;
+  overflow-y: auto;
+}
+.lw-sheet-foot {
+  border-top: 1px solid var(--w-sep);
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  display: flex;
+}
+.lw-sheet-foot small {
+  color: var(--w-3);
+  font-size: 11px;
+}
+.lw-sheet h5 {
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+}
+.lw-sheet h5.big {
+  font-size: 17px;
+}
+.lw-sheet .sec {
+  color: var(--w-2);
+}
+.lw-sheet .cap {
+  color: var(--w-2);
+  font-size: 11px;
+}
+.lw-sheet .txt {
+  background: var(--w-field);
+  border: 1px solid #ffffff24;
+  border-radius: 6px;
+  outline: none;
+  width: 100%;
+  height: 24px;
+  padding: 0 8px;
+}
+.lw-sheet textarea.txt {
+  resize: none;
+  height: 70px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.lw-sheet .txt:focus {
+  box-shadow: 0 0 0 3px #0a84ff66;
+}
+.lw-sheet select {
+  background: var(--w-ctl);
+  border: 0;
+  border-radius: 6px;
+  height: 22px;
+  padding: 0 6px;
+}
+.lw-list {
+  flex-direction: column;
+  display: flex;
+}
+.lw-list > button {
+  cursor: pointer;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 5px 8px;
+  display: flex;
+}
+.lw-list > button:hover {
+  background: var(--w-sep);
+}
+.lw-list b {
+  font-size: 12px;
+  font-weight: 500;
+}
+.lw-list .mono {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+}
+.lw-list small,
+.lw-item small {
+  color: var(--w-2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-size: 11px;
+  overflow: hidden;
+}
+.lw-item {
+  border-bottom: 1px solid var(--w-sep);
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 10px;
+  display: flex;
+}
+.lw-item b {
+  font-size: 12px;
+  font-weight: 600;
+}
+.lw-line {
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+.lw-line a {
+  color: #419cff;
+  cursor: pointer;
+}
+.lw-usage {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  display: flex;
+}
+.lw-usage .who {
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+}
+.lw-usage .who svg {
+  width: 16px;
+  height: 16px;
+}
+.lw-usage .who small {
+  color: var(--w-3);
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 400;
+}
+.lw-usage .win {
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  display: flex;
+}
+.lw-usage .win > div:first-child {
+  justify-content: space-between;
+  align-items: baseline;
+  display: flex;
+}
+.lw-usage .win b {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.lw-usage .win b + small {
+  color: var(--w-2);
+  margin-left: 4px;
+  font-size: 10px;
+}
+.lw-usage .bar {
+  background: #ffffff1f;
+  border-radius: 99px;
+  height: 5px;
+  overflow: hidden;
+}
+.lw-usage .bar i {
+  background: #30d158;
+  border-radius: 99px;
+  height: 100%;
+  display: block;
+}
+.lw-usage .win > small {
+  color: var(--w-2);
+  font-size: 10px;
+}
+.lw-cards {
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  display: grid;
+}
+.lw-cards button {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--w-sep);
+  border-radius: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  font-size: 12px;
+  display: flex;
+}
+.lw-cards button svg {
+  width: 20px;
+  height: 20px;
+}
+.lw-cards button[aria-pressed='true'] {
+  background: #0a84ff26;
+  border-color: var(--w-blue);
+}
+.lw-cards em {
+  color: var(--w-2);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 600;
+}
+.lw-field {
+  flex-direction: column;
+  gap: 5px;
+  display: flex;
+}
+.lw-spin {
+  border: 1.5px solid #ffffff33;
+  border-top-color: #fff;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  animation: 0.8s linear infinite lw-rot;
+  display: inline-block;
+}
+@keyframes lw-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* minimizada: Dock, aviso y notificación */
+.lw-away {
+  color: var(--muted);
+  text-align: center;
+  text-wrap: balance;
+  opacity: 0;
+  max-width: 34ch;
+  margin: 0;
+  transition: opacity 0.4s;
+  font-size: 15px;
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.lw-away b {
+  color: var(--text);
+  font-weight: 600;
+  display: block;
+}
+.lw-dock {
+  cursor: pointer;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(#22262f, #12141a);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  transition:
+    opacity 0.4s,
+    transform 0.25s;
+  display: grid;
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 16px 40px -12px #000;
+}
+.lw-dock svg {
+  width: 32px;
+  height: 32px;
+}
+.lw-dock i {
+  background: #fff;
+  opacity: 0.8;
+  border-radius: 50%;
+  width: 4px;
+  height: 4px;
+  position: absolute;
+  bottom: -9px;
+}
+.lw-dock:hover {
+  transform: translateX(-50%) translateY(-4px);
+}
+.lw-dock:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 4px;
+}
+.lw-desk.away .lw-away,
+.lw-desk.away .lw-dock {
+  opacity: 1;
+}
+.lw-desk.away .lw-dock {
+  pointer-events: auto;
+}
+.lw-banner {
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: left;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  z-index: 9;
+  background: #2a2a2ee6;
+  border: 1px solid #ffffff26;
+  border-radius: 14px;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  width: min(330px, 92%);
+  padding: 10px 14px 11px;
+  animation: 0.4s cubic-bezier(0.2, 0.9, 0.2, 1) lw-banner;
+  font:
+    13px/1.35 -apple-system,
+    system-ui,
+    sans-serif;
+  display: grid;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  box-shadow: 0 18px 50px -10px #000;
+}
+.lw-banner[hidden] {
+  display: none;
+}
+.lw-banner .app {
+  color: rgba(235, 235, 245, 0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+.lw-banner b {
+  font-weight: 600;
+}
+.lw-banner span:last-child {
+  color: rgba(235, 235, 245, 0.7);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  overflow: hidden;
+}
+@keyframes lw-banner {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+.lw-meter {
+  font-family: var(--mono);
+  color: var(--dim);
+  margin: 14px 2px 0;
+  font-size: 12px;
+}
+.lw-meter b {
+  color: var(--green);
+  font-weight: 500;
+}
+.lw-meter b.n {
+  color: var(--text);
+}
+
+@media (width<=560px) {
+  .lw-desk {
+    height: 580px;
+  }
+  .lw-row {
+    gap: 6px;
+  }
+  #lw-attach span,
+  #lw-cmds span,
+  #lw-act span {
+    display: none;
+  }
+}
+</style>
+
+<script>
+// ── Interruptor "Prueba Light en esta web": pausa las animaciones de la página ──
+const webToggle = document.getElementById('light-toggle');
+const webState = document.getElementById('light-state');
+webToggle?.addEventListener('click', () => {
+  const on = document.documentElement.dataset.light !== 'on';
+  document.documentElement.dataset.light = on ? 'on' : 'off';
+  webToggle.setAttribute('aria-pressed', String(on));
+  if (webState) webState.textContent = on ? 'Animaciones en pausa: el hero se ha congelado' : 'Las animaciones están activas';
+});
+
+// ── Ventana Light ──
+const PROV = {
+  codex: { name: 'Codex', sym: 'p-codex', tint: '#e8e8f0', models: ['gpt-6-luna'] },
+  claude: { name: 'Claude Code', sym: 'p-claude', tint: '#d97757', models: ['Predeterminado', 'Opus 5.5'] },
+  opencode: { name: 'OpenCode', sym: 'p-opencode', tint: '#40c8e0', models: ['Predeterminado'] },
+  stellar: { name: 'Stellar Code', sym: 'p-stellar', tint: '#5e5ce6', models: ['Predeterminado'] },
+};
+type Prov = keyof typeof PROV;
+type Status = 'idle' | 'running' | 'queued' | 'waiting';
+type Msg = { role: 'user' | 'assistant' | 'jack' | 'error'; text: string; files?: string[] };
+type Tool = { text: string; status: string; detail: string };
+type Approval = { title: string; reason: string; command: string };
+type Queued = { text: string; files: string[] };
+type Run = {
+  tokens: string[];
+  pos: number;
+  acc: number;
+  think: number;
+  since: number;
+  dirty: boolean;
+  light: number; // repintados reales en Light (uno por segundo, y ninguno si está suspendida)
+  normal: number; // los que haría Normal agrupando cada 50 ms
+  msg: Msg | null;
+  ask: Approval | null;
+  asked: boolean;
+  allow: string;
+  deny: string;
+  tools: Tool[];
+};
+type Chat = {
+  id: string;
+  title: string;
+  provider: Prov;
+  path: string;
+  model: string;
+  msgs: Msg[];
+  status: Status;
+  draft: string;
+  files: string[];
+  waiting: Queued[];
+  approval: Approval | null;
+  unread: boolean;
+  tools: Tool[];
+  n: number;
+  run: Run | null;
+  stats: { light: number; normal: number } | null;
+};
+
+const FLUSH_MS = 1000; // Light agrupa el texto en streaming cada segundo
+const TICK_MS = 50; // Normal lo agrupa cada 50 ms
+const TOKEN_MS = 90; // ritmo al que el proveedor entrega cada palabra
+const JACK_COMMANDS: [string, string, string][] = [
+  ['btw', 'pregunta', 'Pregunta al margen sin interrumpir al agente ni entrar en su historial (⌥↩)'],
+  ['compact', '8000', 'Reduce el contexto mediante un resumen; conserva el historial'],
+  ['autocompact', '30000 8000 | off', 'Compacta antes del siguiente mensaje al superar el umbral'],
+  ['contexto', '', 'Muestra contexto y presupuesto'],
+  ['fijar', 'texto | listar | quitar número', 'Conserva instrucciones en futuras sesiones'],
+  ['resumen', '', 'Resume decisiones, avances y pendientes'],
+  ['checkpoint', 'nombre | restaurar nombre', 'Guarda una copia o restaura en otra conversación'],
+  ['rama', 'nombre', 'Crea una conversación independiente con el contexto actual'],
+  ['traspasar', 'codex | claude | opencode (opcional)', 'Prepara un resumen para otro modelo o proveedor'],
+  ['plan', 'tarea', 'Activa Plan y prepara la tarea'],
+  ['revisar', 'instrucciones opcionales', 'Revisa los cambios del proyecto'],
+  ['presupuesto', '20000 | off', 'Avisa al acercarse al presupuesto de tokens'],
+  ['comandos', 'crear nombre texto | eliminar nombre', 'Lista, crea o elimina plantillas personales'],
+];
+const PROVIDER_COMMANDS: Record<Prov, [string, string][]> = {
+  codex: [
+    ['compact', 'Resume la conversación para liberar contexto'],
+    ['review', 'Revisa los cambios actuales'],
+    ['init', 'Crea AGENTS.md con instrucciones del proyecto'],
+  ],
+  claude: [
+    ['compact', 'Resume la conversación para liberar contexto'],
+    ['review', 'Revisa un pull request'],
+    ['init', 'Crea CLAUDE.md con instrucciones del proyecto'],
+  ],
+  opencode: [
+    ['init', 'Crea o actualiza AGENTS.md'],
+    ['compact', 'Compacta la sesión'],
+  ],
+  stellar: [
+    ['init', 'Crea o actualiza AGENTS.md'],
+    ['compact', 'Compacta la sesión'],
+  ],
+};
+const PROJECT_FILES: Record<string, string[]> = {
+  'checkout-web': ['vite.config.ts', 'package.json', 'src/checkout/Cart.tsx', 'src/checkout/pay.ts', 'README.md'],
+  Jack: ['README.md', 'Package.swift', 'Sources/Jack/LightWindowView.swift', 'Sources/JackCore/ChatStore.swift'],
+};
+
+const win = document.getElementById('lw');
+const desk = document.getElementById('lw-desk');
+
+if (win && desk) {
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+  const titleEl = $('lw-chat-title');
+  const folderEl = $('lw-folder');
+  const statusEl = $('lw-status');
+  const log = $('lw-log');
+  const approvalEl = $('lw-approval');
+  const waitEl = $('lw-wait');
+  const filesEl = $('lw-files');
+  const input = $<HTMLTextAreaElement>('lw-input');
+  const sendBtn = $<HTMLButtonElement>('lw-send');
+  const stopBtn = $<HTMLButtonElement>('lw-stop');
+  const chatsBtn = $('lw-chats-btn');
+  const chatsMenu = $('lw-chats-menu');
+  const moreBtn = $('lw-more-btn');
+  const moreMenu = $('lw-more-menu');
+  const veil = $('lw-veil');
+  const sheetBody = $('lw-sheet-body');
+  const sheetFoot = $('lw-sheet-foot');
+  const banner = $('lw-banner');
+  const meterText = $('lw-meter-text');
+  const modeSwitch = $('lw-switch');
+  const rows = [...document.querySelectorAll<HTMLElement>('#lw-compare [data-row]')];
+
+  const esc = (s: string) =>
+    s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch] ?? ch);
+  const base = (path: string) => path.split('/').filter(Boolean).pop() ?? path;
+  const tok = (s: string) => s.match(/\S+\s*/g) ?? [];
+  const inline = (s: string) =>
+    esc(s)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  // Markdown mínimo: párrafos, listas, código en línea y bloques.
+  function md(src: string) {
+    const out: string[] = [];
+    src.split('```').forEach((part, i) => {
+      if (i % 2) {
+        out.push(`<pre>${esc(part.replace(/^[a-z]*\n/, '').replace(/\n$/, ''))}</pre>`);
+        return;
+      }
+      for (const block of part.split(/\n{2,}/)) {
+        const b = block.trim();
+        if (!b) continue;
+        const lines = b.split('\n');
+        if (lines.every((l) => l.startsWith('- '))) {
+          out.push(`<ul>${lines.map((l) => `<li>${inline(l.slice(2))}</li>`).join('')}</ul>`);
+        } else out.push(`<p>${inline(b).replace(/\n/g, '<br>')}</p>`);
+      }
+    });
+    return out.join('');
+  }
+  const use = (id: string, style = '') => `<svg aria-hidden="true"${style ? ` style="${style}"` : ''}><use href="#${id}"></use></svg>`;
+
+  const chat = (c: Partial<Chat> & Pick<Chat, 'id' | 'title' | 'provider' | 'path'>): Chat => ({
+    model: PROV[c.provider].models[0],
+    msgs: [],
+    status: 'idle',
+    draft: '',
+    files: [],
+    waiting: [],
+    approval: null,
+    unread: false,
+    tools: [],
+    n: 0,
+    run: null,
+    stats: null,
+    ...c,
+  });
+
+  const README_ASK: Approval = {
+    title: 'Ejecutar un comando',
+    reason: 'Comprueba que los ejemplos del README compilan',
+    command: 'swift build',
+  };
+  const chats: Chat[] = [
+    chat({
+      id: 'vite',
+      title: 'Migrar el checkout a Vite 7',
+      provider: 'codex',
+      path: '~/dev/checkout-web',
+      draft: '¿Qué falta por revisar del proxy de desarrollo?',
+      msgs: [
+        { role: 'user', text: 'Migra el checkout de webpack a Vite 7 y deja los tests en verde.' },
+        {
+          role: 'assistant',
+          text: 'He migrado el checkout a Vite 7.\n\n- Sustituí `webpack.config.js` por `vite.config.ts`\n- Actualicé los scripts de `package.json`\n- 14 tests en verde con `npm test`\n\nQueda revisar el proxy de desarrollo.',
+        },
+      ],
+      tools: [
+        { text: 'Read', status: 'completed', detail: 'webpack.config.js' },
+        { text: 'Write', status: 'completed', detail: 'vite.config.ts' },
+        { text: 'Bash', status: 'completed', detail: '$ npm test\n14 passed' },
+      ],
+    }),
+    chat({
+      id: 'readme',
+      title: 'Actualizar el README',
+      provider: 'claude',
+      path: '~/projects/Jack',
+      status: 'waiting',
+      approval: README_ASK,
+      msgs: [
+        { role: 'user', text: 'Actualiza el README con el modo Light y comprueba que los ejemplos funcionan.' },
+        { role: 'assistant', text: 'Voy a comprobar que los ejemplos compilan antes de tocar el README.' },
+      ],
+      tools: [{ text: 'Read', status: 'completed', detail: 'README.md' }],
+    }),
+    chat({
+      id: 'panel',
+      title: 'Revisar el panel de uso',
+      provider: 'opencode',
+      path: '~/projects/Jack',
+      unread: true,
+      msgs: [
+        { role: 'user', text: 'Revisa el panel de uso y dime si las cuotas se leen bien.' },
+        {
+          role: 'assistant',
+          text: 'Revisado. El panel lee bien las cuotas de cada proveedor.\n\n- En Light solo se consultan al pulsar **Actualizar**\n- No encontré fallos en `ProviderUsageView`',
+        },
+      ],
+      tools: [{ text: 'Read', status: 'completed', detail: 'Sources/Jack/ProviderUsageView.swift' }],
+    }),
+  ];
+  // La conversación del README ya está esperando un permiso al abrir la ventana.
+  {
+    const c = chats[1];
+    const said = c.msgs[1];
+    c.run = {
+      tokens: tok(said.text),
+      pos: tok(said.text).length,
+      acc: 0,
+      think: 0,
+      since: 0,
+      dirty: false,
+      light: 0,
+      normal: 0,
+      msg: said,
+      ask: README_ASK,
+      asked: true,
+      allow:
+        '\n\nCompila sin errores, así que los ejemplos siguen siendo válidos.\n\n- Añadí la sección **Modo Light** con el atajo `⌃⌘L`\n- Actualicé la tabla que lo compara con Normal\n\nEl README ya está al día.',
+      deny: '\n\nDe acuerdo, no compilo. Actualizo solo el texto del README y dejo los ejemplos sin comprobar.\n\n- Añadí la sección **Modo Light**\n- Te aviso de que los ejemplos están sin verificar',
+      tools: [],
+    };
+  }
+  let sessions = [
+    { id: 's1', title: 'Arreglar el login', path: '~/dev/checkout-web', when: 'ayer' },
+    { id: 's2', title: 'Notas de la versión', path: '~/projects/Jack', when: 'hace 3 días' },
+  ];
+
+  let cur = chats[0];
+  let maxConc = 1; // «Agentes simultáneos en Light»: 1 por defecto
+  const queue: Chat[] = [];
+  let timer = 0;
+  let minimized = false;
+  let onScreen = true;
+  let stale = false;
+  let usageRead = 'hace 12 min';
+  let usageBusy = false;
+  let serversBusy = false;
+  let bannerChat: Chat | null = null;
+  let bannerTimer = 0;
+  let created = 0;
+
+  const active = (c: Chat) => c.status !== 'idle';
+  const running = () => chats.filter((c) => c.status === 'running').length;
+  const uiHidden = () => minimized || !onScreen || document.hidden;
+  const flag = (row: string, on: boolean) => rows.forEach((el) => el.dataset.row === row && el.classList.toggle('lit', on));
+  let pollTimer = 0;
+  function flashPolling() {
+    flag('polling', true);
+    clearTimeout(pollTimer);
+    pollTimer = window.setTimeout(() => flag('polling', false), 2600);
+  }
+
+  // ── Pintado ──
+  let approvalKey = '';
+  let waitKey = '';
+  let filesKey = '';
+  function render() {
+    if (uiHidden()) {
+      stale = true;
+      return;
+    }
+    const c = cur;
+    const name = PROV[c.provider].name;
+    titleEl.textContent = c.title;
+    folderEl.textContent = base(c.path);
+    folderEl.title = c.path;
+    statusEl.textContent = { running: 'Trabajando…', queued: 'En cola', waiting: 'Necesita tu respuesta', idle: 'Listo' }[c.status];
+
+    const aKey = c.approval ? c.id + c.approval.command : '';
+    if (aKey !== approvalKey) {
+      approvalKey = aKey;
+      approvalEl.hidden = !c.approval;
+      approvalEl.innerHTML = c.approval
+        ? `<div class="lw-card"><div class="hd">${use('i-hand')}${name} necesita tu permiso</div>` +
+          `<div class="tt">${esc(c.approval.title)}</div><div class="why">${esc(c.approval.reason)}</div>` +
+          `<pre>$ ${esc(c.approval.command)}</pre><div class="acts"><small>O escribe en el chat qué debe hacer en su lugar</small>` +
+          `<button class="lw-b" type="button" data-ap="deny" title="Rechazar (Esc)">Rechazar</button>` +
+          `<button class="lw-b pri" type="button" data-ap="allow" title="Permitir una vez (⌘↩)">Permitir</button></div></div>`
+        : '';
+    }
+    const wKey = c.id + JSON.stringify(c.waiting);
+    if (wKey !== waitKey) {
+      waitKey = wKey;
+      waitEl.hidden = !c.waiting.length;
+      waitEl.innerHTML = c.waiting.length
+        ? `<div class="hd">${use('i-clock')}<b>En espera</b><span>· se enviará cuando ${name} termine</span>` +
+          `<button class="now" type="button" data-w="now" title="Detiene el paso en curso para que ${name} lea ya los mensajes en espera (⌘↩)">` +
+          `Interrumpir y enviar <em>⌘↩</em></button></div>` +
+          c.waiting
+            .map(
+              (m, i) =>
+                `<div class="q"><i>›</i><span>${esc(m.text || 'Archivos adjuntos')}</span>` +
+                `<button type="button" data-w="edit" data-i="${i}" title="Editar: lo devuelve al cuadro de mensaje" aria-label="Editar mensaje en espera">${use('i-pencil')}</button>` +
+                `<button type="button" data-w="rm" data-i="${i}" title="Quitar de la espera" aria-label="Quitar mensaje en espera">${use('i-x')}</button></div>`,
+            )
+            .join('')
+        : '';
+    }
+    const fKey = c.id + c.files.join('|');
+    if (fKey !== filesKey) {
+      filesKey = fKey;
+      filesEl.hidden = !c.files.length;
+      filesEl.innerHTML = c.files
+        .map((f, i) => `<button class="lw-b sm" type="button" data-f="${i}" title="${esc(f)}">${esc(base(f))} ×</button>`)
+        .join('');
+    }
+    renderComposer();
+
+    const st = c.run ?? c.stats;
+    meterText.innerHTML =
+      st && st.normal
+        ? `Esta respuesta: <b>${st.light}</b> ${st.light === 1 ? 'repintado' : 'repintados'} en Light · <b class="n">${st.normal}</b> en Normal`
+        : 'Envía un mensaje y mira cómo llega el texto: en bloques, una vez por segundo.';
+    flag('stream', chats.some((x) => x.status === 'running' && x.run !== null && x.run.think <= 0));
+    flag('parallel', chats.some((x) => x.status === 'queued'));
+  }
+  function renderComposer() {
+    sendBtn.textContent = active(cur) ? 'En cola' : 'Enviar';
+    sendBtn.disabled = !input.value.trim() && !cur.files.length;
+    stopBtn.hidden = !active(cur);
+  }
+  function renderLog(stick = true) {
+    if (uiHidden()) {
+      stale = true;
+      return;
+    }
+    const near = log.scrollHeight - log.scrollTop - log.clientHeight < 48;
+    log.innerHTML = cur.msgs
+      .map((m) => {
+        const head = m.role === 'user' ? 'Tú' : m.role === 'jack' ? 'Jack' : m.role === 'error' ? 'Error' : 'Agente';
+        // Los mensajes del usuario se quedan literales, igual que en la app.
+        const body = m.role === 'assistant' ? md(m.text) : `<p>${esc(m.text).replace(/\n/g, '<br>')}</p>`;
+        const files = (m.files ?? []).map((f) => `<p>Adjunto: ${esc(f)}</p>`).join('');
+        return `<div class="lw-msg ${m.role}"><h6>${head}</h6>${body}${files}</div>`;
+      })
+      .join('');
+    if (stick || near) log.scrollTop = log.scrollHeight;
+  }
+  function refresh() {
+    if (uiHidden() || !stale) return;
+    stale = false;
+    render();
+    renderLog();
+  }
+
+  // ── Motor: una respuesta llega palabra a palabra, pero Light la pinta por segundos ──
+  function makeRun(c: Chat, text: string): Run {
+    const q = text.trim().replace(/\s+/g, ' ');
+    const about = q ? `«${q.length > 60 ? q.slice(0, 57) + '…' : q}»` : 'los archivos adjuntos';
+    const folder = base(c.path);
+    const run: Run = {
+      tokens: [],
+      pos: 0,
+      acc: 0,
+      think: 600,
+      since: 0,
+      dirty: false,
+      light: 0,
+      normal: 0,
+      msg: null,
+      ask: null,
+      asked: false,
+      allow: '',
+      deny: '',
+      tools: [{ text: 'Read', status: 'completed', detail: PROJECT_FILES[folder]?.[0] ?? 'README.md' }],
+    };
+    const kind = c.n % 3;
+    if (kind === 1) {
+      run.tokens = tok(`Para responder a ${about} necesito lanzar los tests del proyecto.`);
+      run.ask = { title: 'Ejecutar un comando', reason: 'Lanza la batería de tests del proyecto', command: 'npm test' };
+      run.allow =
+        '\n\nTests ejecutados: **14 en verde**, 0 fallos.\n\n- La parte por la que preguntas está cubierta\n- No hizo falta tocar nada más\n\nPuedes seguir desde aquí.';
+      run.deny =
+        '\n\nDe acuerdo, no ejecuto el comando. Si quieres lanzarlo tú:\n\n```\nnpm test\n```\n\nMientras tanto sigo solo con lectura.';
+    } else if (kind === 0) {
+      run.tokens = tok(
+        `Sobre ${about}: lo he revisado en \`${folder}\`.\n\n- Leí los archivos implicados y el cambio es acotado\n- No rompe la compilación ni los tests actuales\n- Lo pendiente queda anotado al final de esta conversación\n\nSi quieres, lo aplico ahora mismo.`,
+      );
+    } else {
+      run.tokens = tok(
+        `Hecho. Resumen de ${about}:\n\n- Cambié lo mínimo necesario en \`${folder}\`\n- Dejé el resto como estaba\n- Añadí una nota con lo que conviene revisar después\n\nNo queda nada pendiente por mi parte.`,
+      );
+      run.tools.push({ text: 'Edit', status: 'completed', detail: PROJECT_FILES[folder]?.[1] ?? 'README.md' });
+    }
+    c.n += 1;
+    return run;
+  }
+  function commit(c: Chat, r: Run) {
+    if (!r.msg) {
+      r.msg = { role: 'assistant', text: '' };
+      c.msgs.push(r.msg);
+    }
+    r.msg.text = r.tokens.slice(0, r.pos).join('').trimEnd();
+    r.dirty = false;
+    if (!uiHidden()) r.light += 1; // con la interfaz suspendida no se repinta nada
+    if (c === cur) renderLog(false);
+  }
+  function pump() {
+    while (queue.length && running() < maxConc) {
+      const c = queue.shift()!;
+      c.status = 'running';
+      if (c.run) c.run.since = performance.now();
+    }
+    if (!timer && running()) timer = window.setInterval(tick, TICK_MS);
+    render();
+  }
+  function enqueue(c: Chat) {
+    c.status = 'queued';
+    if (!queue.includes(c)) queue.push(c);
+    pump();
+  }
+  function start(c: Chat, text: string, files: string[]) {
+    c.msgs.push({ role: 'user', text, files: files.length ? files : undefined });
+    c.run = makeRun(c, text);
+    if (c === cur) renderLog();
+    enqueue(c);
+  }
+  function endRun(c: Chat, chain = true) {
+    const r = c.run;
+    if (r) {
+      if (r.dirty) commit(c, r);
+      c.stats = { light: r.light, normal: r.normal };
+      c.tools.push(...r.tools);
+    }
+    c.run = null;
+    c.approval = null;
+    c.status = 'idle';
+    const at = queue.indexOf(c);
+    if (at >= 0) queue.splice(at, 1);
+    const next = chain ? c.waiting.shift() : undefined;
+    if (next) start(c, next.text, next.files);
+    else pump();
+  }
+  function notify(c: Chat, prefix: string, detail: string) {
+    if (!minimized) return; // la app solo avisa si la ventana no está a la vista
+    bannerChat = c;
+    $('lw-banner-title').textContent = prefix + c.title;
+    $('lw-banner-body').textContent = detail.slice(0, 240);
+    banner.hidden = true;
+    void banner.offsetWidth;
+    banner.hidden = false;
+    clearTimeout(bannerTimer);
+    bannerTimer = window.setTimeout(() => (banner.hidden = true), 8000);
+  }
+  function tick() {
+    const now = performance.now();
+    let changed = false;
+    for (const c of chats) {
+      const r = c.run;
+      if (!r || c.status !== 'running') continue;
+      if (r.think > 0) {
+        r.think -= TICK_MS;
+        if (r.think <= 0) {
+          r.since = now;
+          changed = true;
+        }
+        continue;
+      }
+      r.acc += TICK_MS;
+      if (r.acc >= TOKEN_MS && r.pos < r.tokens.length) {
+        r.acc -= TOKEN_MS;
+        r.pos += 1;
+        r.dirty = true;
+        r.normal += 1;
+      }
+      const end = r.pos >= r.tokens.length;
+      if (r.dirty && (end || now - r.since >= FLUSH_MS)) {
+        commit(c, r);
+        r.since = now;
+        changed = true;
+      }
+      if (!end) continue;
+      changed = true;
+      if (r.ask && !r.asked) {
+        r.asked = true;
+        c.approval = r.ask;
+        c.status = 'waiting';
+        notify(c, 'Necesita tu respuesta: ', r.ask.title);
+        pump();
+      } else {
+        if (c !== cur) c.unread = true;
+        notify(c, 'Terminó: ', r.msg?.text ?? '');
+        endRun(c);
+      }
+    }
+    if (!running()) {
+      clearInterval(timer);
+      timer = 0;
+    }
+    if (changed) render();
+  }
+  function answer(c: Chat, choice: 'allow' | 'deny') {
+    const r = c.run;
+    c.approval = null;
+    if (!r) {
+      c.status = 'idle';
+      render();
+      return;
+    }
+    r.tokens.push(...tok(choice === 'allow' ? r.allow : r.deny));
+    if (choice === 'allow' && r.ask) r.tools.push({ text: 'Bash', status: 'completed', detail: '$ ' + r.ask.command });
+    r.ask = null;
+    enqueue(c);
+  }
+  function sendWaitingNow(c: Chat) {
+    const next = c.waiting.shift();
+    if (!next) return;
+    endRun(c, false);
+    start(c, next.text, next.files);
+  }
+  function send(interrupting = false) {
+    const c = cur;
+    const text = input.value.trim();
+    if (!text && !c.files.length) {
+      if (interrupting && c.waiting.length) sendWaitingNow(c);
+      return;
+    }
+    const msg: Queued = { text, files: c.files.slice() };
+    input.value = '';
+    c.draft = '';
+    c.files = [];
+    if (c.approval) {
+      // Escribir con un permiso pendiente lo rechaza y le dice qué hacer en su lugar.
+      endRun(c, false);
+      start(c, msg.text, msg.files);
+    } else if (active(c)) {
+      c.waiting.push(msg);
+      if (interrupting) sendWaitingNow(c);
+      else render();
+    } else start(c, msg.text, msg.files);
+  }
+  function select(c: Chat) {
+    cur = c;
+    c.unread = false;
+    input.value = c.draft;
+    closeSheet();
+    render();
+    renderLog();
+  }
+
+  // ── Menús ──
+  function closeMenus() {
+    for (const [btn, menu] of [
+      [chatsBtn, chatsMenu],
+      [moreBtn, moreMenu],
+    ]) {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  }
+  function toggleMenu(btn: HTMLElement, menu: HTMLElement) {
+    const open = menu.hidden;
+    closeMenus();
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  }
+  chatsBtn.addEventListener('click', () => {
+    chatsMenu.innerHTML =
+      '<button type="button" role="menuitem" data-chat="">Buscar conversaciones…</button><hr>' +
+      chats
+        .map((c) => {
+          const marks = (c.status === 'waiting' ? ' · En espera' : '') + (c.unread ? ' · Nuevo' : '');
+          return `<button type="button" role="menuitem" data-chat="${c.id}">${esc(c.title + marks)}</button>`;
+        })
+        .join('');
+    toggleMenu(chatsBtn, chatsMenu);
+  });
+  chatsMenu.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-chat]');
+    if (!b) return;
+    closeMenus();
+    const c = chats.find((x) => x.id === b.dataset.chat);
+    if (c) select(c);
+    else openSheet('conversations');
+  });
+  moreBtn.addEventListener('click', () => toggleMenu(moreBtn, moreMenu));
+  moreMenu.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-panel]');
+    if (!b) return;
+    closeMenus();
+    if (b.dataset.panel === 'normal') toNormal();
+    else openSheet(b.dataset.panel ?? '');
+  });
+  document.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest?.('.lw-pop')) closeMenus();
+  });
+
+  // En la web, «Normal» es la demo de arriba.
+  function toNormal() {
+    modeSwitch.setAttribute('aria-checked', 'false');
+    window.setTimeout(() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 320);
+    window.setTimeout(() => modeSwitch.setAttribute('aria-checked', 'true'), 1600);
+  }
+  modeSwitch.addEventListener('click', toNormal);
+
+  // ── Hojas ──
+  let sheet = '';
+  let fill: (() => void) | null = null;
+  const newAgent = { space: '', provider: 'codex' as Prov, model: 'gpt-6-luna', effort: 'high', msg: '' };
+  const CLOSE = '<span class="lw-grow"></span><button class="lw-b" type="button" data-act="close">Cerrar</button>';
+  const spaces = () => [...new Set(chats.map((c) => c.path))].sort();
+  const query = () => (sheetBody.querySelector<HTMLInputElement>('#lw-q')?.value ?? '').trim().toLowerCase();
+  const listEl = () => sheetBody.querySelector<HTMLElement>('#lw-sheet-list');
+
+  function drawSheet() {
+    fill = null;
+    let html = '';
+    let foot = CLOSE;
+    const c = cur;
+    if (sheet === 'conversations') {
+      html =
+        '<h5>Conversaciones</h5><input class="txt" id="lw-q" placeholder="Buscar por título o carpeta" aria-label="Buscar por título o carpeta"><div class="lw-list" id="lw-sheet-list"></div>';
+      fill = () => {
+        const q = query();
+        listEl()!.innerHTML = chats
+          .filter((x) => !q || x.title.toLowerCase().includes(q) || x.path.toLowerCase().includes(q))
+          .map((x) => `<button type="button" data-act="chat" data-id="${x.id}"><b>${esc(x.title)}</b><small>${PROV[x.provider].name} · ${esc(x.path)}</small></button>`)
+          .join('');
+      };
+    } else if (sheet === 'commands') {
+      html =
+        '<h5>Comandos</h5><input class="txt" id="lw-q" placeholder="Buscar comando" aria-label="Buscar comando"><div class="lw-list" id="lw-sheet-list"></div>';
+      fill = () => {
+        const q = query();
+        const row = (prefix: string, name: string, hint: string, desc: string) =>
+          !q || name.toLowerCase().includes(q) || desc.toLowerCase().includes(q)
+            ? `<button type="button" data-act="cmd" data-cmd="${prefix + name}"><span class="mono">${esc(prefix + name + (hint ? ' ' + hint : ''))}</span><small style="white-space:normal">${esc(desc)}</small></button>`
+            : '';
+        listEl()!.innerHTML =
+          '<span class="cap">Del proveedor</span>' +
+          PROVIDER_COMMANDS[c.provider].map(([n, d]) => row('/', n, '', d)).join('') +
+          '<hr style="width:100%;border:0;border-top:1px solid var(--w-sep);margin:8px 0"><span class="cap">De Jack</span>' +
+          JACK_COMMANDS.map(([n, h, d]) => row('!', n, h, d)).join('');
+      };
+    } else if (sheet === 'activity') {
+      html =
+        '<h5>Comandos y herramientas</h5>' +
+        (c.tools.length
+          ? c.tools
+              .slice(-100)
+              .map((t) => `<div class="lw-item"><b>${esc(t.text)} · ${esc(t.status)}</b><span class="mono" style="font:11px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap">${esc(t.detail)}</span></div>`)
+              .join('')
+          : '<span class="sec">Todavía no hay actividad de herramientas.</span>');
+    } else if (sheet === 'formatted') {
+      html = c.msgs
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => `<span class="cap">${m.role === 'user' ? 'Tú' : 'Agente'}</span><div class="lw-rich">${md(m.text)}</div>`)
+        .join('');
+    } else if (sheet === 'options') {
+      html =
+        '<h5>Opciones de Light</h5>' +
+        `<label class="lw-line">Modelo<select data-opt="model">${PROV[c.provider].models.map((m) => `<option${m === c.model ? ' selected' : ''}>${m}</option>`).join('')}</select></label>` +
+        `<label class="lw-line">Agentes simultáneos en Light<select data-opt="conc">${[1, 2, 4, 8, 16, 32, 64].map((n) => `<option${n === maxConc ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` +
+        '<span class="sec" style="font-size:12px">El modo Normal conserva su configuración. Las sesiones inactivas de Claude se cierran en un máximo de 30 segundos si no tienen trabajo pendiente.</span>';
+    } else if (sheet === 'usage') {
+      const win = (t: string, p: number, r: string) =>
+        `<div class="win"><div><span>${t}</span><span><b>${p} %</b><small>restante</small></span></div><div class="bar"><i style="width:${p}%;background:${p <= 10 ? '#ff453a' : p <= 30 ? '#ff9f0a' : '#30d158'}"></i></div><small>${r}</small></div>`;
+      const card = (id: Prov, body: string) =>
+        `<div class="lw-usage"><div class="who">${use(PROV[id].sym, `color:${PROV[id].tint}`)}${PROV[id].name}<small>Leído ${usageRead}</small></div>${body}</div>`;
+      html =
+        `<h5><span>Uso y límites<br><small class="cap" style="font-weight:400">Cuota restante de cada proveedor</small></span>` +
+        `<span class="lw-line">${usageBusy ? '<i class="lw-spin"></i>' : ''}<button class="lw-b sm" type="button" data-act="usage" ${usageBusy ? 'disabled' : ''} title="Actualizar cuotas sin enviar mensajes a los modelos" aria-label="Actualizar cuotas">${use('i-refresh')}</button></span></h5>` +
+        card('codex', win('Sesión · 5 h', 64, 'Se reinicia en 2 horas · 18:40') + win('Semanal · 7 d', 81, 'Se reinicia en 4 días · 28 nov, 9:00')) +
+        card('claude', win('Sesión · 5 h', 27, 'Se reinicia en 48 minutos · 16:10') + win('Semanal · 7 d', 73, 'Se reinicia en 5 días · 29 nov, 9:00'));
+    } else if (sheet === 'progress') {
+      html =
+        '<h5>Progreso y descargas<button class="lw-b" type="button" data-act="progress">Actualizar</button></h5><span class="sec">No hay tareas registradas.</span>';
+    } else if (sheet === 'servers') {
+      html =
+        `<h5>Servidores<button class="lw-b" type="button" data-act="servers" ${serversBusy ? 'disabled' : ''}>Actualizar</button></h5>` +
+        (serversBusy
+          ? '<span class="sec">Consultando…</span>'
+          : '<div class="lw-line"><span><span class="mono" style="font:12px ui-monospace,Menlo,monospace">npm run dev</span><br><small class="cap">5173</small></span><span class="lw-grow"></span><a>Abrir</a></div>');
+    } else if (sheet === 'files') {
+      const folder = base(c.path);
+      html =
+        `<h5>Archivos del proyecto</h5><span class="cap">${esc(c.path)}</span><div class="lw-list">` +
+        (PROJECT_FILES[folder] ?? ['README.md'])
+          .map((f) => `<button type="button" data-act="file" data-file="${esc(f)}"><span class="lw-line">${use('i-doc')}<span class="mono">${esc(f)}</span></span></button>`)
+          .join('') +
+        '</div>';
+    } else if (sheet === 'resume') {
+      html =
+        '<h5>Retomar sesión de Claude Code</h5><div class="lw-list">' +
+        (sessions.length
+          ? sessions.map((s) => `<button type="button" data-act="session" data-id="${s.id}"><b>${esc(s.title)}</b><small>${esc(s.path)} · ${s.when}</small></button>`).join('')
+          : '<span class="sec">No quedan sesiones por importar.</span>') +
+        '</div>';
+    } else if (sheet === 'new') {
+      const auto = !newAgent.space;
+      const hasMsg = Boolean(newAgent.msg.trim());
+      const can = !auto || hasMsg;
+      html =
+        '<h5 class="big" style="flex-direction:column;align-items:flex-start;gap:3px">Nuevo agente<small class="sec" style="font-size:12px;font-weight:400">Elige dónde trabaja y con qué agente.</small></h5>' +
+        `<div class="lw-field"><span class="cap">Space</span><select data-na="space"><option value="">Automático</option>${spaces().map((s) => `<option value="${esc(s)}"${s === newAgent.space ? ' selected' : ''}>${esc(base(s))}</option>`).join('')}</select>` +
+        (auto ? '<small class="cap">El agente elige la carpeta del proyecto a partir del primer mensaje</small>' : '') +
+        '</div>' +
+        `<div class="lw-field"><span class="cap">Agente</span><div class="lw-cards">${(Object.keys(PROV) as Prov[]).map((id) => `<button type="button" data-act="prov" data-id="${id}" aria-pressed="${id === newAgent.provider}">${use(PROV[id].sym, `color:${PROV[id].tint}`)}<span>${PROV[id].name}</span>${id === 'stellar' ? '<em>BETA</em>' : ''}</button>`).join('')}</div></div>` +
+        `<div class="lw-line" style="align-items:flex-start"><div class="lw-field lw-grow"><span class="cap">Modelo</span><select data-na="model">${PROV[newAgent.provider].models.map((m) => `<option${m === newAgent.model ? ' selected' : ''}>${m}</option>`).join('')}</select></div>` +
+        (newAgent.provider !== 'opencode'
+          ? `<div class="lw-field"><span class="cap">Esfuerzo</span><select data-na="effort">${[['low', 'Bajo'], ['medium', 'Medio'], ['high', 'Alto']].map(([v, t]) => `<option value="${v}"${v === newAgent.effort ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`
+          : '') +
+        '</div>' +
+        `<div class="lw-field"><span class="cap">${auto ? 'Primer mensaje' : 'Primer mensaje (opcional)'}</span><textarea class="txt" data-na="msg" aria-label="Primer mensaje" placeholder="${auto ? 'Describe la tarea; el agente buscará el proyecto: «arregla el login de Jack»…' : 'Describe la tarea y el agente empezará en cuanto lo crees…'}">${esc(newAgent.msg)}</textarea></div>`;
+      foot =
+        `<small>${can ? '⌘↩ para crear' : 'Escribe la tarea o elige una carpeta'}</small><span class="lw-grow"></span>` +
+        '<button class="lw-b" type="button" data-act="close">Cancelar</button>' +
+        `<button class="lw-b pri" type="button" data-act="create" ${can ? '' : 'disabled'}>${hasMsg ? 'Crear y enviar' : 'Crear agente'}</button>`;
+    }
+    sheetBody.innerHTML = html;
+    sheetFoot.innerHTML = foot;
+    fill?.();
+  }
+  function openSheet(kind: string) {
+    closeMenus();
+    sheet = kind;
+    if (kind === 'servers') loadServers();
+    veil.hidden = false;
+    drawSheet();
+    sheetBody.querySelector<HTMLElement>('input, textarea')?.focus({ preventScroll: true });
+  }
+  function closeSheet() {
+    if (!sheet) return;
+    sheet = '';
+    veil.hidden = true;
+    sheetBody.textContent = '';
+  }
+  function loadServers() {
+    serversBusy = true;
+    flashPolling();
+    window.setTimeout(() => {
+      serversBusy = false;
+      if (sheet === 'servers') drawSheet();
+    }, 800);
+  }
+  function createAgent() {
+    const text = newAgent.msg.trim();
+    if (!newAgent.space && !text) return;
+    created += 1;
+    const c = chat({
+      id: 'new' + created,
+      title: text ? (text.length > 44 ? text.slice(0, 43) + '…' : text) : 'Nuevo agente',
+      provider: newAgent.provider,
+      model: newAgent.model,
+      path: newAgent.space || spaces()[0],
+    });
+    chats.push(c);
+    newAgent.msg = '';
+    select(c);
+    if (text) start(c, text, []);
+    input.focus({ preventScroll: true });
+  }
+  veil.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t === veil) return closeSheet();
+    const b = t.closest<HTMLElement>('[data-act]');
+    if (!b || (b as HTMLButtonElement).disabled) return;
+    const act = b.dataset.act;
+    if (act === 'close') closeSheet();
+    else if (act === 'chat') {
+      const c = chats.find((x) => x.id === b.dataset.id);
+      if (c) select(c);
+    } else if (act === 'cmd') {
+      // Como en la app: deja el comando en el borrador y devuelve el foco.
+      input.value = cur.draft = (b.dataset.cmd ?? '') + ' ';
+      closeSheet();
+      renderComposer();
+      input.focus({ preventScroll: true });
+    } else if (act === 'file') {
+      const f = b.dataset.file ?? '';
+      if (f && !cur.files.includes(f)) cur.files.push(f);
+      closeSheet();
+      render();
+    } else if (act === 'usage') {
+      usageBusy = true;
+      flashPolling();
+      drawSheet();
+      window.setTimeout(() => {
+        usageBusy = false;
+        usageRead = 'ahora';
+        if (sheet === 'usage') drawSheet();
+      }, 900);
+    } else if (act === 'progress') flashPolling();
+    else if (act === 'servers') {
+      loadServers();
+      drawSheet();
+    } else if (act === 'session') {
+      const s = sessions.find((x) => x.id === b.dataset.id);
+      if (!s) return;
+      sessions = sessions.filter((x) => x !== s);
+      const c = chat({
+        id: s.id,
+        title: s.title,
+        provider: 'claude',
+        path: s.path,
+        msgs: [
+          { role: 'user', text: s.title + '.' },
+          { role: 'assistant', text: 'Sesión retomada. Tengo el contexto de la última vez; dime por dónde seguimos.' },
+        ],
+      });
+      chats.push(c);
+      select(c);
+    } else if (act === 'prov') {
+      newAgent.provider = b.dataset.id as Prov;
+      newAgent.model = PROV[newAgent.provider].models[0];
+      drawSheet();
+    } else if (act === 'create') {
+      createAgent();
+    }
+  });
+  veil.addEventListener('input', (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.id === 'lw-q') fill?.();
+    else if (t.dataset.na === 'msg') {
+      const had = Boolean(newAgent.msg.trim());
+      newAgent.msg = t.value;
+      if (had !== Boolean(t.value.trim())) {
+        // Solo cambia el pie (texto del botón); no se redibuja el campo para no perder el foco.
+        const can = Boolean(newAgent.space) || !had;
+        const btn = sheetFoot.querySelector<HTMLButtonElement>('[data-act="create"]')!;
+        btn.textContent = had ? 'Crear agente' : 'Crear y enviar';
+        btn.disabled = !can;
+        sheetFoot.querySelector('small')!.textContent = can ? '⌘↩ para crear' : 'Escribe la tarea o elige una carpeta';
+      }
+    }
+  });
+  veil.addEventListener('change', (e) => {
+    const t = e.target as HTMLSelectElement;
+    if (t.dataset.opt === 'model') cur.model = t.value;
+    else if (t.dataset.opt === 'conc') {
+      maxConc = Number(t.value);
+      pump();
+    } else if (t.dataset.na === 'space') {
+      newAgent.space = t.value;
+      drawSheet();
+    } else if (t.dataset.na === 'model') newAgent.model = t.value;
+    else if (t.dataset.na === 'effort') newAgent.effort = t.value;
+  });
+  veil.addEventListener('keydown', (e) => {
+    if (sheet === 'new' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      createAgent();
+    }
+  });
+
+  // ── Compositor ──
+  input.addEventListener('input', () => {
+    cur.draft = input.value;
+    renderComposer();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing) {
+      if (e.shiftKey) return; // salto de línea
+      e.preventDefault();
+      if (!e.altKey) send(e.metaKey || e.ctrlKey);
+    } else if (e.key === '.' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      if (active(cur)) endRun(cur);
+    }
+  });
+  sendBtn.addEventListener('click', () => send());
+  stopBtn.addEventListener('click', () => endRun(cur));
+  $('lw-new').addEventListener('click', () => {
+    newAgent.space = cur.path;
+    newAgent.provider = cur.provider;
+    newAgent.model = PROV[cur.provider].models[0];
+    openSheet('new');
+  });
+  $('lw-attach').addEventListener('click', () => openSheet('files'));
+  $('lw-cmds').addEventListener('click', () => openSheet('commands'));
+  $('lw-act').addEventListener('click', () => openSheet('activity'));
+  filesEl.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-f]');
+    if (!b) return;
+    cur.files.splice(Number(b.dataset.f), 1);
+    render();
+  });
+  approvalEl.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-ap]');
+    if (b) answer(cur, b.dataset.ap as 'allow' | 'deny');
+  });
+  waitEl.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-w]');
+    if (!b) return;
+    const c = cur;
+    if (b.dataset.w === 'now') return sendWaitingNow(c);
+    const [m] = c.waiting.splice(Number(b.dataset.i), 1);
+    if (b.dataset.w === 'edit' && m) {
+      // Editar lo devuelve al cuadro de mensaje, delante de lo que ya hubiera.
+      input.value = c.draft = [m.text, c.draft].filter(Boolean).join('\n\n');
+      for (const f of m.files) if (!c.files.includes(f)) c.files.push(f);
+      input.focus({ preventScroll: true });
+    }
+    render();
+  });
+  win.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!chatsMenu.hidden || !moreMenu.hidden) closeMenus();
+    else if (sheet) closeSheet();
+  });
+
+  // ── Minimizar: Light suspende la interfaz ──
+  function setMin(on: boolean) {
+    minimized = on;
+    closeMenus();
+    win.classList.toggle('min', on);
+    win.toggleAttribute('inert', on);
+    desk.classList.toggle('away', on);
+    flag('occluded', on);
+    if (!on) {
+      banner.hidden = true;
+      stale = true;
+      refresh();
+    }
+  }
+  $('lw-min').addEventListener('click', () => setMin(true));
+  $('lw-dock').addEventListener('click', () => setMin(false));
+  banner.addEventListener('click', () => {
+    const c = bannerChat;
+    setMin(false);
+    if (c) select(c);
+  });
+  new IntersectionObserver(([entry]) => {
+    onScreen = entry.isIntersecting;
+    refresh();
+  }).observe(desk);
+  document.addEventListener('visibilitychange', refresh);
+
+  flag('chat', true);
+  input.value = cur.draft;
+  stale = true;
+  refresh();
+}
+</script>

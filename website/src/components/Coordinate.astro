@@ -1,0 +1,1545 @@
+---
+// Sección "Agentes juntos": un escenario orbital en vez de scrollytelling.
+//   · El agente que diriges está en el centro; los de otros proveedores, en órbita.
+//   · Una línea de tiempo en bucle muestra el reparto (create_agent), los mensajes
+//     (send_message), lo que comparten por el MCP de Jack y los resultados.
+//   · Pulsar cualquier agente lo pone a dirigir: todos pueden llamar a los demás.
+// Los nodos son DOM (nítidos y accesibles); enlaces, paquetes y brillos van en <canvas>.
+const cast = [
+  { id: 'claude', name: 'Claude Code', sym: 'p-claude', tint: '#d97757', model: 'Opus 5.5' },
+  { id: 'codex', name: 'Codex', sym: 'p-codex', tint: '#e8e8f0', model: 'gpt-6-luna' },
+  { id: 'opencode', name: 'OpenCode', sym: 'p-opencode', tint: '#40c8e0', model: 'Predeterminado' },
+  { id: 'antigravity', name: 'Antigravity', sym: 'p-antigravity', tint: '#30d158', model: 'Predeterminado' },
+  { id: 'qoder', name: 'Qoder', sym: 'p-qoder', tint: '#bf5af2', model: 'Predeterminado' },
+];
+---
+
+<section class="section" id="juntos">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Más que un chat</span>
+      <h2>Le escribes a uno. <span class="grad">Trabajan todos.</span></h2>
+      <p>
+        Pides algo a un solo agente y él se lo reparte a otros, de proveedores distintos. Jack los junta: los
+        agentes hablan con él por un MCP propio y, a través de él, entre ellos.
+      </p>
+    </div>
+
+    <div
+      class="stage reveal"
+      id="orbit"
+      data-layout="wide"
+      role="group"
+      aria-label="Demostración: un agente reparte el trabajo entre agentes de otros proveedores"
+    >
+      <div class="scene" id="orbit-scene">
+        <canvas id="orbit-fx" aria-hidden="true"></canvas>
+
+        <span class="hint"><i></i>Pulsa cualquier agente: pasa a dirigir él</span>
+
+        <span class="jack" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <g stroke-linecap="round" fill="currentColor" stroke="currentColor">
+              <g opacity="0.45" stroke-width="3.4">
+                <line x1="32" y1="32" x2="32" y2="10"></line>
+                <line x1="32" y1="32" x2="51" y2="43"></line>
+                <line x1="32" y1="32" x2="13" y2="43"></line>
+                <circle cx="32" cy="10" r="4.4" stroke="none"></circle>
+                <circle cx="51" cy="43" r="4.4" stroke="none"></circle>
+                <circle cx="13" cy="43" r="4.4" stroke="none"></circle>
+              </g>
+              <circle cx="32" cy="32" r="6.6" stroke="none"></circle>
+              <g stroke-width="4.6">
+                <line x1="32" y1="32" x2="52.5" y2="20"></line>
+                <line x1="32" y1="32" x2="11.5" y2="20"></line>
+                <line x1="32" y1="32" x2="32" y2="54" stroke="#ff6a2b"></line>
+                <circle cx="52.5" cy="20" r="6" stroke="none"></circle>
+                <circle cx="11.5" cy="20" r="6" stroke="none"></circle>
+                <circle cx="32" cy="54" r="6.4" stroke="none" fill="#ff6a2b"></circle>
+              </g>
+            </g>
+          </svg>
+          <b>MCP</b><span>de Jack</span>
+        </span>
+
+        {
+          cast.map((a, k) => (
+            <button
+              class="node"
+              type="button"
+              data-id={a.id}
+              data-name={a.name}
+              data-sym={a.sym}
+              data-tint={a.tint}
+              data-role={k === 0 ? 'lead' : 'sub'}
+              data-state="idle"
+              data-pos={k === 0 ? 'c' : 'r'}
+              style={`--tint:${a.tint}`}
+            >
+              <span class="orb">
+                <svg>
+                  <use href={`#${a.sym}`} />
+                </svg>
+                <svg class="ok">
+                  <use href="#i-check" />
+                </svg>
+              </span>
+              <span class="meta">
+                <b class="nm">{a.name}</b>
+                <em class="md">{a.model}</em>
+                <span class="task" />
+                <span class="st">
+                  <i class="spin" />
+                  <span class="tx">Disponible</span>
+                </span>
+              </span>
+            </button>
+          ))
+        }
+
+        <div class="bubble" id="orbit-bubble" aria-hidden="true"><code>send_message</code><span></span></div>
+
+        <div class="cmp" id="orbit-cmp">
+          <span class="who">
+            <svg><use href="#p-claude"></use></svg>
+          </span>
+          <span class="cmp-text"><b>›</b><span id="orbit-typed"></span><i class="caret"></i></span>
+          <button class="send" id="orbit-send" type="button" aria-label="Enviar de nuevo">
+            <svg><use href="#i-arrow-up"></use></svg>
+          </button>
+        </div>
+
+        <div class="wire" aria-hidden="true">
+          <div class="wire-head"><i></i><span>MCP DE JACK</span><em>en directo</em></div>
+          <ol id="orbit-wire"></ol>
+        </div>
+      </div>
+    </div>
+
+    <ol class="beats reveal" id="orbit-beats" style="--d: 0.1s">
+      <li>
+        <button class="beat on" type="button" data-beat="0">
+          <span class="num">01</span>
+          <span class="bt">Le escribes a uno.</span>
+          <span class="bp">
+            Abres un chat con el agente que prefieras y le pides lo que necesitas, como siempre. Un solo mensaje,
+            sin abrir una terminal por proveedor.
+          </span>
+        </button>
+      </li>
+      <li>
+        <button class="beat" type="button" data-beat="1">
+          <span class="num">02</span>
+          <span class="bt">Él se lo reparte a otros.</span>
+          <span class="bp">
+            Lanza a otros agentes, cada uno con su proveedor, su modelo y su carpeta; les escribe y espera su
+            resultado. Cada subagente aparece como un chat más en la barra lateral.
+          </span>
+          <span class="tags">
+            <code>create_agent</code><code>send_message</code><code>wait_for_agents</code><code
+              >get_agent_result</code
+            >
+          </span>
+        </button>
+      </li>
+      <li>
+        <button class="beat" type="button" data-beat="2">
+          <span class="num">03</span>
+          <span class="bt">Y comparten lo que necesitan.</span>
+          <span class="bp">
+            Todos hablan con el mismo MCP de Jack, así que no se pisan: usan el servidor que ya está en marcha,
+            versionan los artefactos y enseñan su progreso.
+          </span>
+          <span class="tags">
+            <code data-f="srv">jack-servers</code><code data-f="art">artifact_update</code><code data-f="prog"
+              >jack-progress</code
+            >
+          </span>
+        </button>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<style>
+/* ── Escenario ── */
+.stage {
+  aspect-ratio: 1180 / 640;
+  background:
+    radial-gradient(70% 80% at 37% 40%, #171c2b 0%, #0b0d14 58%, #07080b 100%),
+    var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 60px 140px -40px #000e,
+    inset 0 1px #ffffff14;
+}
+.stage[data-layout='tall'] {
+  aspect-ratio: 460 / 800;
+  max-width: 520px;
+  margin-inline: auto;
+  border-radius: 20px;
+}
+.stage::before {
+  content: '';
+  background-image: radial-gradient(#ffffff14 1px, #0000 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(60% 70% at 37% 42%, #000, #0000);
+  mask-image: radial-gradient(60% 70% at 37% 42%, #000, #0000);
+  position: absolute;
+  inset: 0;
+}
+.stage[data-layout='tall']::before {
+  -webkit-mask-image: radial-gradient(80% 50% at 50% 38%, #000, #0000);
+  mask-image: radial-gradient(80% 50% at 50% 38%, #000, #0000);
+}
+.scene {
+  width: 1180px;
+  height: 640px;
+  transform: scale(var(--k, 1));
+  transform-origin: 0 0;
+  font-family: var(--sans);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.stage[data-layout='tall'] .scene {
+  width: 460px;
+  height: 800px;
+}
+.scene b,
+.scene em,
+.scene i {
+  font-style: normal;
+}
+.scene svg {
+  max-width: none;
+}
+#orbit-fx {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  position: absolute;
+  inset: 0;
+}
+
+.hint {
+  font-family: var(--mono);
+  color: var(--dim);
+  letter-spacing: 0.02em;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  display: flex;
+  position: absolute;
+  top: 22px;
+  left: 24px;
+}
+.hint i {
+  background: var(--accent-2);
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  animation: 2.2s ease-out infinite ping;
+}
+@keyframes ping {
+  0% {
+    box-shadow: 0 0 0 0 #ffb15c80;
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 9px #ffb15c00;
+  }
+}
+.stage[data-layout='tall'] .hint {
+  top: 9px;
+  left: 16px;
+  font-size: 10.5px;
+}
+
+/* etiqueta del anillo: por ahí pasa todo */
+.jack {
+  color: rgba(235, 235, 245, 0.62);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  background: #0d1017f2;
+  border: 1px solid #ffb15c47;
+  border-radius: 999px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  position: absolute;
+  top: 86px;
+  left: 440px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 26px -6px #ff6a2b99;
+}
+.jack svg {
+  color: #fff;
+  width: 15px;
+  height: 15px;
+}
+.jack b {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+.stage[data-layout='tall'] .jack {
+  top: 105px;
+  left: 230px;
+  padding-right: 9px;
+}
+.stage[data-layout='tall'] .jack span {
+  display: none;
+}
+
+/* ── Agentes ── */
+.node {
+  appearance: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+.node:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 6px;
+}
+.node[data-role='lead'] {
+  z-index: 2;
+}
+.orb {
+  background: radial-gradient(circle at 32% 24%, color-mix(in srgb, var(--tint) 38%, #161922), #0c0e14 78%);
+  border: 1px solid color-mix(in srgb, var(--tint) 55%, transparent);
+  color: var(--tint);
+  border-radius: 50%;
+  place-items: center;
+  transition:
+    transform 0.8s cubic-bezier(0.2, 0.9, 0.2, 1),
+    filter 0.5s,
+    box-shadow 0.5s;
+  display: grid;
+  position: absolute;
+  inset: 0;
+  box-shadow:
+    0 0 0 5px #ffffff05,
+    0 12px 30px -10px #000,
+    inset 0 1px #ffffff2e;
+}
+.orb > svg:first-child {
+  width: 23px;
+  height: 23px;
+}
+.node[data-role='sub'][data-state='idle'] .orb {
+  filter: saturate(0.45) brightness(0.72);
+}
+.node[data-role='sub']:hover .orb {
+  filter: none;
+  transform: scale(1.1);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--tint) 16%, transparent),
+    0 0 34px -4px var(--tint),
+    inset 0 1px #ffffff2e;
+}
+.node[data-state='work'] .orb,
+.node[data-state='done'] .orb {
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--tint) 10%, transparent),
+    0 0 30px -8px var(--tint),
+    inset 0 1px #ffffff2e;
+}
+.node[data-role='lead'] .orb {
+  transform: scale(1.62);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--tint) 12%, transparent),
+    0 0 44px -6px var(--tint),
+    inset 0 1px #ffffff38;
+}
+.ok {
+  color: #06140b;
+  background: #5ee59a;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  padding: 3.5px;
+  transition:
+    transform 0.4s cubic-bezier(0.3, 1.6, 0.4, 1),
+    opacity 0.3s;
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  opacity: 0;
+  transform: scale(0.3);
+}
+.node[data-state='done'] .ok {
+  opacity: 1;
+  transform: none;
+}
+
+.meta {
+  width: max-content;
+  max-width: 162px;
+  transition: opacity 0.35s;
+  flex-direction: column;
+  gap: 2px;
+  display: flex;
+  position: absolute;
+}
+.node.moving .meta {
+  opacity: 0;
+  transition-duration: 0.1s;
+}
+.node[data-pos='r'] .meta {
+  text-align: left;
+  align-items: flex-start;
+  top: 50%;
+  left: calc(100% + 12px);
+  transform: translateY(-50%);
+}
+.node[data-pos='l'] .meta {
+  text-align: right;
+  align-items: flex-end;
+  top: 50%;
+  right: calc(100% + 12px);
+  transform: translateY(-50%);
+}
+.node[data-pos='d'] .meta,
+.node[data-pos='u'] .meta,
+.node[data-pos='c'] .meta {
+  text-align: center;
+  align-items: center;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.node[data-pos='d'] .meta {
+  top: calc(100% + 9px);
+}
+.node[data-pos='u'] .meta {
+  bottom: calc(100% + 9px);
+}
+.node[data-pos='c'] .meta {
+  max-width: 230px;
+  top: calc(100% + 30px);
+}
+.stage[data-layout='tall'] .node:not([data-pos='c']) .meta {
+  background: #0a0c12d9;
+  border-radius: 10px;
+  max-width: 128px;
+  padding: 4px 8px;
+}
+.stage[data-layout='tall'] .node[data-pos='c'] .meta {
+  max-width: 150px;
+}
+.nm {
+  color: rgba(255, 255, 255, 0.94);
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.node[data-role='lead'] .nm {
+  font-size: 16px;
+}
+.md {
+  color: rgba(235, 235, 245, 0.5);
+  font-family: var(--mono);
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.3;
+}
+.task {
+  color: rgba(255, 255, 255, 0.86);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+}
+.task:empty {
+  display: none;
+}
+.st {
+  color: rgba(235, 235, 245, 0.58);
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-size: 11.5px;
+  line-height: 1.35;
+  display: flex;
+}
+.node[data-role='lead'] .st {
+  margin-top: 3px;
+  font-size: 12.5px;
+}
+.tx {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.node[data-role='sub'][data-state='idle'] .meta {
+  opacity: 0.55;
+}
+.node[data-role='sub'][data-state='idle']:hover .meta {
+  opacity: 1;
+}
+.node[data-state='done'] .st {
+  color: #8be8a8;
+}
+.spin {
+  border: 1.5px solid #ffffff2e;
+  border-top-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  animation: 0.8s linear infinite rot;
+  display: none;
+}
+.node[data-state='work'] .spin {
+  display: block;
+}
+@keyframes rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* lo que un agente le escribe a otro */
+.bubble {
+  color: rgba(255, 255, 255, 0.92);
+  pointer-events: none;
+  background: #14100df5;
+  border: 1px solid #ffb15c70;
+  border-radius: 12px;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: 220px;
+  padding: 7px 11px 8px;
+  transition: opacity 0.3s;
+  font-size: 12px;
+  line-height: 1.35;
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  z-index: 3;
+  box-shadow: 0 14px 40px -12px #000, 0 0 30px -10px #ff6a2b;
+}
+.bubble.show {
+  opacity: 1;
+}
+.bubble code {
+  color: var(--accent-2);
+  font-size: 10px;
+}
+.stage[data-layout='tall'] .bubble {
+  max-width: 190px;
+}
+
+/* tu mensaje (y su respuesta) */
+.cmp {
+  background: linear-gradient(180deg, #ffffff14, #ffffff08);
+  border: 1px solid #ffffff1f;
+  border-radius: 14px;
+  align-items: center;
+  gap: 10px;
+  width: 690px;
+  min-height: 46px;
+  padding: 8px 9px 8px 9px;
+  display: flex;
+  position: absolute;
+  top: 572px;
+  left: 95px;
+  box-shadow:
+    0 14px 40px -14px #000c,
+    inset 0 1px #ffffff14;
+  transition: border-color 0.5s;
+}
+.stage[data-layout='tall'] .cmp {
+  width: 428px;
+  top: 520px;
+  left: 16px;
+}
+.cmp.replied {
+  border-color: color-mix(in srgb, var(--lead, #fff) 55%, transparent);
+}
+.who {
+  background: color-mix(in srgb, var(--lead, #fff) 16%, #0000);
+  border: 1px solid color-mix(in srgb, var(--lead, #fff) 45%, transparent);
+  color: var(--lead, #fff);
+  border-radius: 50%;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  display: grid;
+}
+.who svg {
+  width: 14px;
+  height: 14px;
+}
+.cmp-text {
+  font-family: var(--mono);
+  color: rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+.stage[data-layout='tall'] .cmp-text {
+  white-space: normal;
+}
+.cmp-text b {
+  color: #0a84ff;
+  margin-right: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.cmp.replied .cmp-text b {
+  display: none;
+}
+.caret {
+  vertical-align: -2px;
+  background: #fff;
+  width: 7px;
+  height: 14px;
+  margin-left: 2px;
+  animation: 1s steps(2, end) infinite blink;
+  display: inline-block;
+}
+.cmp.sent .caret {
+  display: none;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.send {
+  appearance: none;
+  color: #fff;
+  cursor: pointer;
+  background: #0a84ff;
+  border: 0;
+  border-radius: 8px;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s;
+  display: grid;
+}
+.send svg {
+  width: 13px;
+  height: 13px;
+}
+.send:hover {
+  box-shadow: 0 0 0 5px #0a84ff40;
+}
+.cmp.sent .send {
+  transform: scale(0.92);
+}
+
+/* el cable: lo que se dicen, tal cual */
+.wire {
+  background: linear-gradient(180deg, #0b0d13e6, #090a0fe6);
+  border: 1px solid #ffffff14;
+  border-radius: 18px;
+  flex-direction: column;
+  width: 264px;
+  height: 588px;
+  padding: 14px 14px 10px;
+  display: flex;
+  position: absolute;
+  top: 26px;
+  left: 892px;
+  box-shadow: inset 0 1px #ffffff0d;
+}
+.stage[data-layout='tall'] .wire {
+  width: 428px;
+  height: 194px;
+  padding: 11px 13px 6px;
+  top: 592px;
+  left: 16px;
+}
+.wire-head {
+  color: rgba(235, 235, 245, 0.5);
+  letter-spacing: 0.14em;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  font-weight: 600;
+  display: flex;
+}
+.wire-head i {
+  background: #5ee59a;
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 8px #5ee59ab0;
+  animation: 1.6s ease-in-out infinite live;
+}
+@keyframes live {
+  50% {
+    opacity: 0.35;
+  }
+}
+.wire-head em {
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+  color: var(--dim);
+  margin-left: auto;
+  font-weight: 400;
+}
+#orbit-wire {
+  flex-direction: column;
+  flex: 1;
+  justify-content: flex-end;
+  min-height: 0;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#0000, #000 26%);
+  mask-image: linear-gradient(#0000, #000 26%);
+}
+#orbit-wire :global(li) {
+  opacity: 0.5;
+  border-top: 1px solid #ffffff0a;
+  flex: none;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 0;
+  animation: 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) wire-in;
+  display: flex;
+}
+#orbit-wire :global(li:last-child) {
+  opacity: 1;
+}
+#orbit-wire :global(li > svg),
+#orbit-wire :global(li > i) {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+#orbit-wire :global(li > i) {
+  color: #5aa9ff;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-style: normal;
+  line-height: 14px;
+}
+#orbit-wire :global(li > div) {
+  flex-direction: column;
+  min-width: 0;
+  display: flex;
+}
+#orbit-wire :global(code) {
+  color: var(--accent-2);
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+#orbit-wire :global(li.ok code) {
+  color: #8be8a8;
+}
+#orbit-wire :global(li.me code) {
+  color: #5aa9ff;
+}
+#orbit-wire :global(span) {
+  color: rgba(235, 235, 245, 0.55);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow: hidden;
+}
+@keyframes wire-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ── Los tres tiempos, bajo el escenario ── */
+.beats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+.beats li {
+  display: flex;
+}
+.beat {
+  --p: 0;
+  appearance: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: #ffffff04;
+  border-radius: 18px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 20px 22px 22px;
+  transition:
+    border-color 0.45s,
+    background 0.45s;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+.beat > * {
+  opacity: 0.5;
+  transition: opacity 0.45s;
+}
+.beat::before {
+  content: '';
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transform-origin: 0 50%;
+  transform: scaleX(var(--p));
+  height: 2px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+.beat:hover {
+  border-color: var(--line-2);
+}
+.beat:hover > *,
+.beat.on > * {
+  opacity: 1;
+}
+.beat.on {
+  background: #ff6a2b0d;
+  border-color: #ffb15c59;
+}
+.beat:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 3px;
+}
+.num {
+  font-family: var(--mono);
+  color: var(--accent-2);
+  letter-spacing: 0.08em;
+  font-size: 12px;
+}
+.bt {
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 600;
+  line-height: 1.12;
+}
+.bp {
+  color: var(--muted);
+  text-wrap: pretty;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.tags {
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  display: flex;
+}
+.tags code {
+  border: 1px solid var(--line-2);
+  color: var(--accent-2);
+  background: #ffffff08;
+  border-radius: 7px;
+  padding: 2px 9px;
+  font-size: 12px;
+  transition:
+    background 0.4s,
+    border-color 0.4s,
+    box-shadow 0.4s;
+}
+.tags code.lit {
+  background: #ff6a2b26;
+  border-color: #ffb15c99;
+  box-shadow: 0 0 22px -6px #ff6a2b;
+}
+
+@media (width<=900px) {
+  .beats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+</style>
+
+<script>
+type Pt = [number, number];
+type State = 'idle' | 'work' | 'done';
+type Agent = {
+  id: string;
+  name: string;
+  sym: string;
+  tint: string;
+  rgb: string;
+  el: HTMLElement;
+  task: HTMLElement;
+  tx: HTMLElement;
+  slot: number; // -1 = dirige
+  x: number;
+  y: number;
+  glow: number;
+  state: State;
+};
+type Packet = {
+  path: (u: number) => Pt;
+  u: number;
+  dur: number;
+  rgb: string;
+  label: string;
+  ring: boolean;
+  done?: () => void;
+};
+type Ripple = { at: () => Pt; rgb: string; age: number; big: boolean };
+type Layout = { W: number; H: number; cx: number; cy: number; rx: number; ry: number; ang: number[]; cmpY: number };
+
+// El escenario se dibuja en coordenadas lógicas y se escala al ancho disponible.
+const WIDE: Layout = { W: 1180, H: 640, cx: 440, cy: 262, rx: 262, ry: 176, ang: [-142, -38, 24, 156], cmpY: 572 };
+const TALL: Layout = { W: 460, H: 800, cx: 230, cy: 300, rx: 158, ry: 195, ang: [-130, -50, 25, 155], cmpY: 520 };
+
+const PROMPT = 'Migra el checkout a Vite 7, actualiza el README, revisa el panel y añade tests';
+const REPLY = 'Hecho: checkout en Vite 7, README al día, panel revisado y 9 tests nuevos.';
+const NOTE = 'Documenta también el servidor de desarrollo';
+// Las tareas van por posición en la órbita: quien esté ahí se la queda.
+const JOBS = [
+  { task: 'Migrar a Vite 7', work: 'Editando vite.config.ts', result: 'Migrado · 14 tests ok' },
+  { task: 'Actualizar el README', work: 'Editando README.md', result: 'README al día' },
+  { task: 'Revisar el panel de uso', work: 'Leyendo ProviderUsageView', result: 'Revisado · sin fallos' },
+  { task: 'Añadir tests', work: 'Ejecutando npm test', result: '9 tests nuevos' },
+];
+const T = { split: 3.2, share: 8.6, end: 19.4 };
+const AMBER = '255,194,122';
+const GREEN = '94,229,154';
+const BLUE = '90,169,255';
+const TAU = Math.PI * 2;
+const LEAD_FOOT = 116; // hasta dónde llega el rótulo del agente que dirige
+
+const stageEl = document.getElementById('orbit');
+const sceneEl = document.getElementById('orbit-scene');
+const canvasEl = document.getElementById('orbit-fx') as HTMLCanvasElement | null;
+const context = canvasEl?.getContext('2d');
+
+if (stageEl && sceneEl && canvasEl && context) {
+  const stage = stageEl;
+  const scene = sceneEl;
+  const cv = canvasEl;
+  const ctx = context;
+  const root = document.documentElement;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hexRgb = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16);
+    return `${n >> 16},${(n >> 8) & 255},${n & 255}`;
+  };
+  const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+
+  const agents: Agent[] = [...stage.querySelectorAll<HTMLElement>('.node')].map((el, k) => ({
+    id: el.dataset.id ?? '',
+    name: el.dataset.name ?? '',
+    sym: el.dataset.sym ?? '',
+    tint: el.dataset.tint ?? '#ffffff',
+    rgb: hexRgb(el.dataset.tint ?? '#ffffff'),
+    el,
+    task: el.querySelector<HTMLElement>('.task')!,
+    tx: el.querySelector<HTMLElement>('.tx')!,
+    slot: k - 1,
+    x: 0,
+    y: 0,
+    glow: 0,
+    state: 'idle',
+  }));
+  let lead = agents[0];
+  const slots: Agent[] = agents.slice(1);
+
+  const cmp = stage.querySelector<HTMLElement>('#orbit-cmp')!;
+  const typed = stage.querySelector<HTMLElement>('#orbit-typed')!;
+  const whoUse = stage.querySelector<SVGUseElement>('.who use')!;
+  const sendBtn = stage.querySelector<HTMLElement>('#orbit-send')!;
+  const wire = stage.querySelector<HTMLElement>('#orbit-wire')!;
+  const bubble = stage.querySelector<HTMLElement>('#orbit-bubble')!;
+  const bubbleText = bubble.querySelector<HTMLElement>('span')!;
+  const beatEls = [...document.querySelectorAll<HTMLElement>('#orbit-beats .beat')];
+  const factEls = [...document.querySelectorAll<HTMLElement>('#orbit-beats [data-f]')];
+
+  let L = WIDE;
+  let tall = false;
+  let k = 1;
+  let dpr = 1;
+  let snap = true;
+
+  let time = 0; // posición en la línea de tiempo
+  let clock = 0; // tiempo libre: órbita, brillos
+  let cursor = 0;
+  let done = 0;
+  let replied = false;
+  let picked = false; // el visitante eligió quién dirige
+  let leadSpin = 0;
+  let ringHeat = 0;
+  let packets: Packet[] = [];
+  let ripples: Ripple[] = [];
+  let bubbleFor: Agent | null = null;
+  let typedShown = '';
+  let beatShown = -1;
+
+  // ── Geometría ──
+  const slotAngle = (i: number) => ((L.ang[i] + 3 * Math.sin(clock * 0.4 + i * 1.9)) * Math.PI) / 180;
+  const slotPos = (i: number): Pt => {
+    const a = slotAngle(i);
+    return [L.cx + L.rx * Math.cos(a), L.cy + L.ry * Math.sin(a)];
+  };
+  // Enlace curvo entre quien dirige y un subagente: [x0, y0, cx, cy, x1, y1].
+  const geom = (s: Agent) => {
+    const dx = s.x - lead.x;
+    const dy = s.y - lead.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+    const r0 = Math.min(54, len / 2);
+    const r1 = Math.min(34, len / 2);
+    const x0 = lead.x + ux * r0;
+    const y0 = lead.y + uy * r0;
+    const x1 = s.x - ux * r1;
+    const y1 = s.y - uy * r1;
+    const bend = (dx < 0 ? 1 : -1) * len * 0.1;
+    return [x0, y0, (x0 + x1) / 2 - uy * bend, (y0 + y1) / 2 + ux * bend, x1, y1];
+  };
+  const linkPath =
+    (s: Agent, out: boolean) =>
+    (u: number): Pt => {
+      const [x0, y0, mx, my, x1, y1] = geom(s);
+      const t = out ? u : 1 - u;
+      const v = 1 - t;
+      return [v * v * x0 + 2 * v * t * mx + t * t * x1, v * v * y0 + 2 * v * t * my + t * t * y1];
+    };
+  // Por el anillo (el MCP de Jack) viaja lo que comparten entre ellos.
+  const ringPath =
+    (i: number, j: number) =>
+    (u: number): Pt => {
+      const a = slotAngle(i) + (slotAngle(j) - slotAngle(i)) * u;
+      return [L.cx + L.rx * Math.cos(a), L.cy + L.ry * Math.sin(a)];
+    };
+  const userPath =
+    (up: boolean) =>
+    (u: number): Pt => {
+      const y0 = L.cmpY - 8;
+      const y1 = L.cy + LEAD_FOOT;
+      return [L.cx, up ? y0 + (y1 - y0) * u : y1 + (y0 - y1) * u];
+    };
+
+  // ── Estado visible ──
+  function setAgent(a: Agent, state: State, text: string, task?: string) {
+    a.state = state;
+    a.el.dataset.state = state;
+    a.tx.textContent = text;
+    if (task !== undefined) a.task.textContent = task;
+  }
+  function log(from: Agent | null, tool: string, detail: string, kind = '') {
+    const li = document.createElement('li');
+    if (kind) li.className = kind;
+    li.innerHTML =
+      (from ? `<svg style="color:${from.tint}"><use href="#${from.sym}"></use></svg>` : '<i>tú</i>') +
+      '<div><code></code><span></span></div>';
+    li.querySelector('code')!.textContent = tool;
+    li.querySelector('span')!.textContent = detail;
+    wire.append(li);
+    while (wire.children.length > 14) wire.firstElementChild!.remove();
+  }
+  const lit = (name: string) => factEls.forEach((el) => el.dataset.f === name && el.classList.add('lit'));
+  const ripple = (a: Agent, rgb = a.rgb, big = false) => ripples.push({ at: () => [a.x, a.y], rgb, age: 0, big });
+  function shoot(
+    path: (u: number) => Pt,
+    rgb: string,
+    label: string,
+    instant: boolean,
+    after?: () => void,
+    dur = 0.85,
+    ring = false,
+  ) {
+    if (instant) after?.();
+    else packets.push({ path, u: 0, dur, rgb, label, ring, done: after });
+  }
+
+  function applyRoles() {
+    for (const a of agents) {
+      const isLead = a === lead;
+      a.el.dataset.role = isLead ? 'lead' : 'sub';
+      a.el.dataset.pos = isLead ? 'c' : tall ? (a.slot < 2 ? 'u' : 'd') : a.slot === 0 || a.slot === 3 ? 'l' : 'r';
+      a.el.setAttribute('aria-label', isLead ? `${a.name} dirige. Repetir` : `Hacer que dirija ${a.name}`);
+    }
+    whoUse.setAttribute('href', `#${lead.sym}`);
+    stage.style.setProperty('--lead', lead.tint);
+  }
+  function swapLead(next: Agent) {
+    if (next === lead) return;
+    const old = lead;
+    old.slot = next.slot;
+    slots[next.slot] = old;
+    next.slot = -1;
+    lead = next;
+    for (const a of [old, next]) {
+      a.el.classList.add('moving');
+      window.setTimeout(() => a.el.classList.remove('moving'), 520);
+    }
+    applyRoles();
+  }
+
+  // ── Línea de tiempo ──
+  const events: { t: number; run: (instant: boolean) => void }[] = [];
+  const at = (t: number, run: (instant: boolean) => void) => events.push({ t, run });
+
+  // 1 · le escribes a uno
+  at(2.0, (i) => {
+    cmp.classList.add('sent');
+    log(null, 'mensaje', `a ${lead.name}`, 'me');
+    shoot(userPath(true), BLUE, '', i, () => {
+      setAgent(lead, 'work', 'Leyendo tu mensaje…');
+      ripple(lead, BLUE);
+    }, 0.7);
+  });
+
+  // 2 · él se lo reparte a otros
+  at(T.split, () => setAgent(lead, 'work', 'Repartiendo el trabajo'));
+  JOBS.forEach((job, n) => {
+    at(T.split + 0.15 + n * 0.45, (i) => {
+      const s = slots[n];
+      log(lead, 'create_agent', `${s.id} · ${job.task}`);
+      shoot(linkPath(s, true), AMBER, 'create_agent', i, () => {
+        setAgent(s, 'work', 'Pensando…', job.task);
+        ripple(s);
+      });
+    });
+    at(5.7 + n * 0.2, () => setAgent(slots[n], 'work', job.work));
+  });
+  at(5.5, () => {
+    setAgent(lead, 'work', 'Esperando a 4 agentes');
+    log(lead, 'wait_for_agents', 'mode: "all" · 4 agentes');
+  });
+  at(6.2, (i) => {
+    const s = slots[1];
+    log(lead, 'send_message', `${s.id} · «${NOTE}»`);
+    shoot(linkPath(s, true), AMBER, 'send_message', i, () => {
+      bubbleFor = s;
+      bubbleText.textContent = NOTE;
+      bubble.classList.add('show');
+      ripple(s, AMBER);
+    }, 0.95);
+  });
+
+  // 3 · y comparten lo que necesitan
+  at(9.7, () => bubble.classList.remove('show'));
+  at(T.share, (i) => {
+    const [a, b] = [slots[0], slots[1]];
+    setAgent(a, 'work', 'Arranca vite en :5173');
+    log(a, 'jack-servers', 'vite en marcha · :5173');
+    lit('srv');
+    shoot(ringPath(0, 1), AMBER, 'jack-servers', i, () => {
+      setAgent(b, 'work', 'Usa el de :5173');
+      log(b, 'jack-servers', 'ya hay uno en :5173, usa ese');
+      ripple(b, AMBER);
+    }, 1.35, true);
+  });
+  at(10.5, (i) => {
+    const [a, b] = [slots[2], slots[3]];
+    setAgent(a, 'work', 'Guarda informe.html');
+    log(a, 'artifact_create', 'informe.html · v1');
+    lit('art');
+    shoot(ringPath(2, 3), AMBER, 'artifact_update', i, () => {
+      setAgent(b, 'work', 'informe.html → v2');
+      log(b, 'artifact_update', 'expected_version: 1 → v2');
+      ripple(b, AMBER);
+    }, 1.35, true);
+  });
+  at(12.3, () => {
+    log(slots[2], 'jack-progress', 'llama.gguf · 48 MB/s');
+    lit('prog');
+    ripple(slots[2], AMBER);
+  });
+  [38, 52, 67, 81, 93, 100].forEach((pct, n) => at(12.3 + n * 0.24, () => setAgent(slots[2], 'work', `llama.gguf · ${pct} %`)));
+
+  // resultados de vuelta
+  JOBS.forEach((job, n) =>
+    at(14.0 + n * 0.42, (i) => {
+      const s = slots[n];
+      setAgent(s, 'done', job.result);
+      log(lead, 'get_agent_result', `${s.id} · ${job.result}`, 'ok');
+      shoot(linkPath(s, false), GREEN, 'get_agent_result', i, () => {
+        done += 1;
+        setAgent(lead, 'work', `${done} de 4 listos`);
+        ripple(lead, GREEN);
+      }, 0.8);
+    }),
+  );
+  at(16.3, (i) => {
+    setAgent(lead, 'done', '4 de 4 listos');
+    if (!i) ripples.push({ at: () => [lead.x, lead.y], rgb: GREEN, age: 0, big: true });
+    log(lead, 'respuesta', 'para ti', 'ok');
+    shoot(userPath(false), lead.rgb, '', i, () => {
+      replied = true;
+      cmp.classList.add('replied');
+    }, 0.7);
+  });
+  events.sort((a, b) => a.t - b.t);
+
+  function reset() {
+    packets = [];
+    ripples = [];
+    done = 0;
+    replied = false;
+    bubbleFor = null;
+    bubble.classList.remove('show');
+    cmp.classList.remove('sent', 'replied');
+    wire.textContent = '';
+    factEls.forEach((el) => el.classList.remove('lit'));
+    for (const a of agents) setAgent(a, 'idle', a === lead ? 'Esperando tu mensaje' : 'Disponible', '');
+  }
+  function seek(t: number) {
+    reset();
+    time = t;
+    cursor = 0;
+    while (cursor < events.length && events[cursor].t <= t) events[cursor++].run(true);
+  }
+
+  // ── Fotograma ──
+  function syncDom() {
+    const text = replied ? REPLY : PROMPT.slice(0, Math.floor(PROMPT.length * clamp((time - 0.25) / 1.5)));
+    if (text !== typedShown) {
+      typedShown = text;
+      typed.textContent = text;
+    }
+    const beat = time < T.split ? 0 : time < T.share ? 1 : 2;
+    const from = [0, T.split, T.share][beat];
+    const to = [T.split, T.share, T.end - 2.6][beat];
+    if (beat !== beatShown) {
+      beatShown = beat;
+      beatEls.forEach((el, n) => {
+        el.classList.toggle('on', n === beat);
+        el.style.setProperty('--p', n < beat ? '1' : '0');
+      });
+    }
+    beatEls[beat].style.setProperty('--p', clamp((time - from) / (to - from)).toFixed(3));
+    if (bubbleFor) {
+      const b = bubbleFor;
+      bubble.style.transform = tall
+        ? `translate(${b.x.toFixed(1)}px,${(b.y + 40).toFixed(1)}px) translate(-50%,0)`
+        : `translate(${b.x.toFixed(1)}px,${(b.y - 42).toFixed(1)}px) translate(-50%,-100%)`;
+    }
+  }
+
+  function step(dt: number) {
+    const f = snap ? 1 : 1 - Math.exp(-dt * 5);
+    for (const a of agents) {
+      const [tx, ty] = a === lead ? [L.cx, L.cy + 2 * Math.sin(clock * 0.8)] : slotPos(a.slot);
+      a.x += (tx - a.x) * f;
+      a.y += (ty - a.y) * f;
+      a.glow += ((a.state === 'idle' ? 0 : 1) - a.glow) * f;
+      a.el.style.transform = `translate(${a.x.toFixed(1)}px,${a.y.toFixed(1)}px)`;
+    }
+    snap = false;
+    leadSpin += dt * (lead.state === 'work' ? 2.2 : 0.7);
+    ringHeat += ((packets.some((p) => p.ring) ? 1 : 0) - ringHeat) * (1 - Math.exp(-dt * 6));
+    for (const p of packets) p.u += dt / p.dur;
+    packets = packets.filter((p) => {
+      if (p.u < 1) return true;
+      p.done?.();
+      return false;
+    });
+    for (const r of ripples) r.age += dt;
+    ripples = ripples.filter((r) => r.age < (r.big ? 1.3 : 0.75));
+  }
+
+  const dust = Array.from({ length: 56 }, (_, n) => ({
+    a: Math.random() * TAU,
+    r: 0.3 + Math.random() * 1.1,
+    s: (0.015 + Math.random() * 0.045) * (n % 2 ? 1 : -1),
+    z: 0.5 + Math.random() * 1.1,
+    ph: Math.random() * TAU,
+    warm: n % 4 === 0,
+  }));
+  const ease = (u: number) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+
+  function draw() {
+    ctx.setTransform(k * dpr, 0, 0, k * dpr, 0, 0);
+    ctx.clearRect(0, 0, L.W, L.H);
+    ctx.lineCap = 'round';
+
+    // halo de quien dirige
+    const pulse = 0.72 + 0.14 * Math.sin(clock * 1.7) + (lead.state === 'work' ? 0.14 : 0);
+    const halo = ctx.createRadialGradient(lead.x, lead.y, 10, lead.x, lead.y, 190);
+    halo.addColorStop(0, `rgba(${lead.rgb},${(0.3 * pulse).toFixed(3)})`);
+    halo.addColorStop(1, `rgba(${lead.rgb},0)`);
+    ctx.fillStyle = halo;
+    ctx.fillRect(lead.x - 190, lead.y - 190, 380, 380);
+
+    // polvo en órbita
+    for (const d of dust) {
+      const a = d.a + clock * d.s;
+      const al = 0.08 + 0.2 * (0.5 + 0.5 * Math.sin(clock * 1.3 + d.ph));
+      ctx.fillStyle = d.warm ? `rgba(255,177,92,${al.toFixed(3)})` : `rgba(255,255,255,${al.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(L.cx + L.rx * d.r * Math.cos(a), L.cy + L.ry * d.r * Math.sin(a), d.z, 0, TAU);
+      ctx.fill();
+    }
+
+    // el anillo: el MCP de Jack
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.beginPath();
+    ctx.ellipse(L.cx, L.cy, L.rx, L.ry, 0, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([2, 9]);
+    ctx.lineDashOffset = -clock * 12;
+    ctx.lineWidth = 1.2 + ringHeat * 0.8;
+    ctx.strokeStyle = `rgba(255,177,92,${(0.2 + 0.45 * ringHeat).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(L.cx, L.cy, L.rx, L.ry, 0, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // enlaces con cada subagente
+    for (const s of agents) {
+      if (s === lead) continue;
+      const [x0, y0, mx, my, x1, y1] = geom(s);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.quadraticCurveTo(mx, my, x1, y1);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.stroke();
+      if (s.glow > 0.02) {
+        const g = ctx.createLinearGradient(x0, y0, x1, y1);
+        g.addColorStop(0, `rgba(${lead.rgb},${(0.6 * s.glow).toFixed(3)})`);
+        g.addColorStop(1, `rgba(${s.rgb},${(0.6 * s.glow).toFixed(3)})`);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = g;
+        ctx.stroke();
+      }
+    }
+
+    // de tu mensaje al agente
+    const sent = cmp.classList.contains('sent');
+    ctx.setLineDash([3, 7]);
+    ctx.lineDashOffset = clock * (replied ? -10 : 10);
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = sent ? 'rgba(90,169,255,0.4)' : 'rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.moveTo(L.cx, L.cmpY - 8);
+    ctx.lineTo(L.cx, L.cy + LEAD_FOOT);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // arcos girando alrededor de quien dirige
+    [62, 73, 86].forEach((r, n) => {
+      const a0 = leadSpin * [1, -0.7, 0.45][n] + n * 1.3;
+      const sweep = [1.7, 1.1, 0.7][n];
+      ctx.lineWidth = [1.7, 1.3, 1][n];
+      ctx.strokeStyle = `rgba(${lead.rgb},${[0.6, 0.36, 0.2][n]})`;
+      for (const off of [0, Math.PI]) {
+        ctx.beginPath();
+        ctx.arc(lead.x, lead.y, r, a0 + off, a0 + off + sweep);
+        ctx.stroke();
+      }
+    });
+
+    // estado de cada subagente
+    for (const s of agents) {
+      if (s === lead || s.state === 'idle') continue;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      if (s.state === 'done') {
+        ctx.strokeStyle = `rgba(${GREEN},0.55)`;
+        ctx.arc(s.x, s.y, 33, 0, TAU);
+      } else {
+        const a0 = clock * 3 + s.slot;
+        ctx.strokeStyle = `rgba(${s.rgb},0.85)`;
+        ctx.arc(s.x, s.y, 33, a0, a0 + 1.5);
+      }
+      ctx.stroke();
+    }
+
+    ctx.globalCompositeOperation = 'lighter';
+    for (const r of ripples) {
+      const [x, y] = r.at();
+      const life = r.big ? 1.3 : 0.75;
+      const q = r.age / life;
+      ctx.lineWidth = r.big ? 2 : 1.6;
+      ctx.strokeStyle = `rgba(${r.rgb},${((1 - q) * 0.7).toFixed(3)})`;
+      ctx.beginPath();
+      if (r.big) ctx.ellipse(x, y, 60 + q * L.rx * 1.05, 60 + q * L.ry * 1.05, 0, 0, TAU);
+      else ctx.arc(x, y, 30 + q * 46, 0, TAU);
+      ctx.stroke();
+    }
+
+    // paquetes: cada llamada MCP que viaja
+    for (const p of packets) {
+      const e = ease(clamp(p.u));
+      for (let j = 16; j >= 1; j--) {
+        const u = e - j * 0.016;
+        if (u < 0) continue;
+        const [x, y] = p.path(u);
+        const f = 1 - j / 17;
+        ctx.fillStyle = `rgba(${p.rgb},${(f * f * 0.75).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 1 + 2.4 * f, 0, TAU);
+        ctx.fill();
+      }
+      const [hx, hy] = p.path(e);
+      ctx.shadowColor = `rgb(${p.rgb})`;
+      ctx.shadowBlur = 18 * dpr;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 3, 0, TAU);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    // el nombre de la herramienta viaja con el paquete
+    ctx.font = '500 10.5px "Geist Mono", ui-monospace, Menlo, monospace';
+    ctx.textBaseline = 'middle';
+    for (const p of packets) {
+      if (!p.label) continue;
+      const [x, y] = p.path(ease(clamp(p.u)));
+      const w = ctx.measureText(p.label).width + 16;
+      const px = clamp(x - w / 2, 6, L.W - w - 6);
+      const py = y - 28;
+      ctx.globalAlpha = clamp(Math.sin(Math.PI * clamp(p.u)) * 2.4);
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(px, py, w, 18, 9);
+      else ctx.rect(px, py, w, 18);
+      ctx.fillStyle = 'rgba(14,11,9,0.92)';
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(${p.rgb},0.6)`;
+      ctx.stroke();
+      ctx.fillStyle = `rgb(${p.rgb})`;
+      ctx.fillText(p.label, px + 8, py + 9.5);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ── Bucle ──
+  let raf = 0;
+  let last = 0;
+  let visible = false;
+  const still = () => reduced || root.dataset.light === 'on';
+
+  function frame(now: number) {
+    raf = 0;
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    time += dt;
+    clock += dt;
+    while (cursor < events.length && events[cursor].t <= time) events[cursor++].run(false);
+    if (time >= T.end) {
+      // En cada vuelta dirige otro, salvo que el visitante ya haya elegido.
+      if (!picked) swapLead(agents[(agents.indexOf(lead) + 1) % agents.length]);
+      seek(0);
+    }
+    step(dt);
+    draw();
+    syncDom();
+    if (visible && !still()) raf = requestAnimationFrame(frame);
+  }
+  function renderOnce() {
+    snap = true;
+    step(0);
+    draw();
+    syncDom();
+  }
+  function wake() {
+    if (raf || !visible) return;
+    if (still()) {
+      renderOnce();
+      return;
+    }
+    last = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
+  // Sin animación (Light o movimiento reducido) se enseña el final de cada tiempo.
+  function go(t: number, stillT: number) {
+    seek(still() ? stillT : t);
+    if (still()) renderOnce();
+    else wake();
+  }
+
+  function fit() {
+    const avail = stage.parentElement?.clientWidth ?? stage.clientWidth;
+    const nextTall = avail < 880;
+    if (nextTall !== tall || snap) {
+      tall = nextTall;
+      L = tall ? TALL : WIDE;
+      stage.dataset.layout = tall ? 'tall' : 'wide';
+      applyRoles();
+    }
+    k = stage.clientWidth / L.W;
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    scene.style.setProperty('--k', String(k));
+    cv.width = Math.max(1, Math.round(L.W * k * dpr));
+    cv.height = Math.max(1, Math.round(L.H * k * dpr));
+    renderOnce();
+  }
+
+  for (const a of agents) {
+    a.el.addEventListener('click', () => {
+      picked = true;
+      swapLead(a);
+      go(1.5, T.end - 0.5);
+    });
+  }
+  sendBtn.addEventListener('click', () => go(1.5, T.end - 0.5));
+  beatEls.forEach((el, n) =>
+    el.addEventListener('click', () => go([0, T.split, T.share][n], [T.split, T.share, T.end][n] - 0.05)),
+  );
+
+  seek(still() ? T.end - 0.5 : 0);
+  fit();
+  new ResizeObserver(fit).observe(stage.parentElement ?? stage);
+  new IntersectionObserver(
+    ([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible) wake();
+    },
+    { rootMargin: '120px 0px' },
+  ).observe(stage);
+  new MutationObserver(() => {
+    if (still()) go(0, T.end - 0.5);
+    else wake();
+  }).observe(root, { attributes: true, attributeFilter: ['data-light'] });
+}
+</script>
